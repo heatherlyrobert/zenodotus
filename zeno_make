@@ -1,0 +1,495 @@
+#================================[[ beg-code ]]================================#
+
+
+#===(content variables)====================================#
+# starts with a 'y' means a library
+ifeq ($(shell printf "%1.1s" $(NAME_BASE)),y)
+   NAME_VER    := $(shell _libver)
+   NAME_EXE    := $(shell printf "lib%s.so.%s.%s.%s"       "$(NAME_BASE)" "$(word 1, $(NAME_VER))" "$(word 2, $(NAME_VER))" "$(word 3, $(NAME_VER))")
+   NAME_INT    := $(shell printf "lib%s.so.%s"             "$(NAME_BASE)" "$(word 1, $(NAME_VER))")
+   NAME_AR     := lib$(NAME_BASE).a
+   NAME_DEBUG  := $(shell printf "lib%s_debug.so.%s.%s.%s" "$(NAME_BASE)" "$(word 1, $(NAME_VER))" "$(word 2, $(NAME_VER))" "$(word 3, $(NAME_VER))")
+   NAME_DINT   := $(shell printf "lib%s_debug.so.%s"       "$(NAME_BASE)" "$(word 1, $(NAME_VER))")
+   NAME_DAR    := lib$(NAME_BASE)_debug.a
+   LIBRARY     := y
+else
+   NAME_EXE    := $(NAME_BASE)
+   NAME_DEBUG  := $(NAME_BASE)_debug
+   LIBRARY     := -
+endif
+# yLOG can not be stripped in this way
+ifeq ($(NAME_BASE),yLOG)
+   DEBUG_VER  := -
+else
+   DEBUG_VER  := y
+endif
+
+
+#===(compiling variables)==================================#
+COMPILE    := gcc -c -std=gnu89 -x c -g -pg -Wall -Wextra
+COMPILE_EX :=
+ifeq ($(LIBRARY),y)
+   COMPILE_EX := -fPIC
+endif
+INC_DIR    := -I/usr/local/include $(INC_MINE)
+#===(linking variables)====================================#
+LINKER     := gcc
+LIB_DIR    := -L/usr/local/lib64 -L/usr/lib64  -L/lib64 
+LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE) -lyURG_debug -lyLOG_debug
+ifeq ($(NAME_BASE),yVAR)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+endif
+ifeq ($(NAME_BASE),yUNIT)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+endif
+ifeq ($(NAME_BASE),koios)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+endif
+ifeq ($(NAME_BASE),yLOG)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+endif
+ifeq ($(NAME_BASE),yURG)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE) -lyLOG_debug
+endif
+LIB_NORM   := $(subst _debug,      ,$(LIB_DEBUG))
+LIB_UNIT   := $(LIB_DEBUG)   -lyUNIT -lyVAR_debug  $(LIB_MYUNIT)
+#===(install variables)====================================#
+INST_OWNER := root
+INST_PERMS := 0755
+
+
+
+#===(code variables)=======================================#
+HEADERS    := $(sort $(wildcard $(NAME_BASE)*.h))
+#---(sources)----------------#
+SRC_NORM   := $(patsubst %c,%c ,$(sort $(filter-out %_unit.c,$(wildcard $(NAME_BASE)*.c))))
+SRC_UTIL   := $(patsubst %,%.c ,$(NAME_UTIL))
+#---(remove utilities)-------------#
+SRC_NORM   := $(subst $(word 1,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM   := $(subst $(word 2,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM   := $(subst $(word 3,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM   := $(subst $(word 4,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM   := $(subst $(word 5,$(SRC_UTIL)),,$(SRC_NORM))
+#---(objects)----------------#
+OBJ_DEBUG  := $(patsubst %c,%o ,$(SRC_NORM))
+OBJ_NORM   := $(patsubst %c,%os,$(SRC_NORM))
+OBJ_UTILD  := $(patsubst %c,%o ,$(SRC_UTIL))
+OBJ_UTIL   := $(patsubst %c,%os,$(SRC_UTIL))
+#---(simple spacing fix)-----------#
+SRC_NORM   := $(patsubst %os,%c ,$(OBJ_NORM))
+
+
+
+#===(unit testing variables)===============================#
+#---(sources)----------------#
+TEMP       := $(sort $(wildcard $(NAME_BASE)_*.unit))
+SRC_UNIT   := $(patsubst %.unit,%.unit      ,$(TEMP))
+#---(objects)----------------#
+OBJ_UNITD  := $(patsubst %.unit,%_unit.o    ,$(SRC_UNIT))
+OBJ_UNIT   := $(patsubst %.unit,%_unit.os   ,$(SRC_UNIT))
+#---(executables)------------#
+EXE_UNITD  := $(patsubst %.unit,%_unit_debug,$(SRC_UNIT))
+EXE_UNIT   := $(patsubst %.unit,%_unit      ,$(SRC_UNIT))
+#---(editing values)---------#
+TEMP       := $(sort $(wildcard $(NAME_BASE)_[0-9a-z]*.unit))
+SRC_RUNIT  := $(patsubst %.unit,%.unit      ,$(TEMP))
+TEMP       := $(sort $(wildcard $(NAME_BASE)_[A-Z]*.unit))
+SRC_LUNIT  := $(patsubst %.unit,%.unit      ,$(TEMP))
+TEMP       := $(sort $(wildcard $(NAME_BASE)*.sunit))
+SRC_SUNIT  := $(patsubst %.sunit,%.sunit    ,$(TEMP))
+
+TEMP       := $(sort $(wildcard $(NAME_BASE)*.munit))
+SRC_MUNIT  := $(patsubst %.munit,%.munit    ,$(TEMP))
+OBJ_MUNIT  := $(patsubst %.munit,%_munit.o  ,$(SRC_MUNIT))
+EXE_MUNIT  := $(patsubst %.munit,%_munit    ,$(SRC_MUNIT))
+
+
+
+#===(support file variables)===============================#
+MANUALS    := $(sort $(wildcard $(NAME_BASE)*.[0123456789]))
+EDITLIST   := $(HEADERS) $(SRC_NORM) $(SRC_UTIL)
+
+
+
+#===(housekeeping variables)===============================#
+COPY       := cp -f  
+MOVE       := mv -f  
+CLEAN      := rm -f
+PRINTF     := @printf
+ifeq ($(DEBUG_VER),y)
+STRIP      := @grep -a -v -e " DEBUG_" -e " yLOG_" 
+else
+STRIP      := cat
+endif
+
+
+
+
+#===[[ MAIN RULE ]]========================================#
+base               : $(NAME_DEBUG) $(NAME_UTIL)
+
+util               : $(NAME_UTIL)
+
+units              : master $(EXE_UNIT) $(EXE_MUNIT)
+
+all                : $(NAME_DEBUG) $(NAME_UTIL) $(EXE_UNIT)
+
+
+
+#===[[ EXECUTABLES ]]======================================#
+
+#---(production version)--------------#
+#$(NAME_EXE)        : $(OBJ_DEBUG)
+#ifeq ($(LIBRARY),y)
+#	$(LINKER)  -shared -Wl,-soname,$(NAME_INT)  $(LIB_NORM)   -o $(NAME_EXE)    $(OBJ_NORM)
+#	ar         rcs                 $(NAME_AR)   $(OBJ_NORM)
+#else
+#	$(LINKER)  -o $(NAME_EXE)         $(OBJ_NORM)   $(LIB_NORM)
+#endif
+
+#---(debug version)-------------------#
+$(NAME_DEBUG)      : $(OBJ_DEBUG)
+ifeq ($(LIBRARY),y)
+	$(LINKER)  -shared -Wl,-soname,$(NAME_DINT) $(LIB_DEBUG)  -o $(NAME_DEBUG)  $(OBJ_DEBUG)
+	ar         rcs                 $(NAME_DAR)  $(OBJ_DEBUG)
+	$(LINKER)  -shared -Wl,-soname,$(NAME_INT)  $(LIB_NORM)   -o $(NAME_EXE)    $(OBJ_NORM)
+	ar         rcs                 $(NAME_AR)   $(OBJ_NORM)
+else
+	$(LINKER)  -o $(NAME_DEBUG)       $(OBJ_DEBUG)  $(LIB_DEBUG)
+	$(LINKER)  -o $(NAME_EXE)         $(OBJ_NORM)   $(LIB_NORM)
+endif
+
+#---(utility versions)----------------#
+$(NAME_UTIL)       : % : %.o $(OBJ_DEBUG)
+	$(LINKER)  -o $@_debug    $(OBJ_DEBUG)  $@.o          $(LIB_DEBUG)  $(LIB_UTIL)
+	$(LINKER)  -o $@          $(OBJ_NORM)   $@.os         $(LIB_NORM)   $(LIB_UTIL)
+
+#---(master unit)---------------------#
+master             : master.unit
+	koios --ecode master
+
+
+#---(unit testing)--------------------#
+$(EXE_UNIT)        : %_unit : %_unit.o $(HEADERS) $(OBJ_DEBUG)
+	$(LINKER) -o $@_debug    $<   $(filter-out %_main.o,$(OBJ_DEBUG))   $(LIB_UNIT);
+	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_UNIT);
+
+$(EXE_MUNIT)       : %_munit : %_munit.o $(HEADERS) $(OBJ_DEBUG)
+	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_DEBUG) $(LIB_MYUNIT);
+	./$@ --inst  > /dev/null
+
+#$(EXE_UNITD)        : %_unit : %.unit $(OBJ_NORM) $(SRC_UNIT)
+#	@printf "unit test %s %s %d\n" "$<" "$@" "$${#$@}";
+#	@declare  UNIT_ENTRY=$@; \
+#	 declare  UNIT_BASE=$${UNIT_ENTRY: 0: -5}; \
+#    printf "unit_base  : %s\n" "$${UNIT_BASE}"; \
+#    printf "unit_entry : %s\n" "$${UNIT_ENTRY}"; \
+#	 koios $${UNIT_BASE}; \
+#    $(COMPILE) $${UNIT_ENTRY}.c; \
+#	 $(LINKER) -o $${UNIT_ENTRY} $${UNIT_ENTRY}.o $(OBJ_UNIT) $(LIB_UNIT);
+#	@declare  UNIT_ENTRY=$@; \
+#	 declare  UNIT_BASE=$${UNIT_ENTRY: 0: -5}; \
+#    printf "unit_base  : %s\n" "$${UNIT_BASE}"; \
+#    printf "unit_entry : %s\n" "$${UNIT_ENTRY}"; \
+#	 koios --debug $${UNIT_BASE}; \
+#    $(COMPILE) $${UNIT_ENTRY}.c; \
+#	 $(LINKER) -o $${UNIT_ENTRY}_debug $${UNIT_ENTRY}.o $(OBJ_UNITD) $(LIB_UNIT);
+
+
+
+#===[[ OBJECT FILES ]]=====================================#
+# library files need -fPIC which will be in COMPILE_EX (if a lib) or blank if normal
+
+#---(main objects)--------------------#
+$(OBJ_DEBUG)       : %.o : %.c $(HEADERS)
+	@printf "norm  %-20.20s   %-20.20s\n" "$<" "$@";
+	$(COMPILE) $(COMPILE_EX)   $<                          $(INC_DIR)
+	$(STRIP)                   $<        >  $<s
+	$(COMPILE) $(COMPILE_EX)   $<s      -o  $@s            $(INC_DIR)
+
+#---(main objects)--NEW-NEW-NEW-------#
+$(OBJ_UNITD)       : %_unit.o : %.unit $(HEADERS)
+	@printf "unit  %-20.20s   %-20.20s\n" "$<" "$@";
+	koios --edebug $(patsubst %.unit,%,$<)
+	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.c           $(INC_DIR)
+	koios --ecode  $(patsubst %.unit,%,$<)
+	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.cs  -o $@s  $(INC_DIR)
+
+$(OBJ_MUNIT)       : %_munit.o : %.munit $(HEADERS)
+	@printf "munit %-20.20s   %-20.20s\n" "$<" "$@";
+	$(CLEAN)       $(patsubst %.munit,%,$<).wave
+	$(COMPILE)     $(patsubst %.munit,%,$<).munit   -o $(patsubst %.munit,%,$<)_munit.o         $(INC_DIR)
+
+#---(utility objects)-----------------#
+$(OBJ_UTILD)       : %.o : %.c $(HEADERS)
+	@printf "util  %-20.20s   %-20.20s\n" "$<" "$@";
+	$(COMPILE)                 $<                          $(INC_DIR)
+	$(STRIP)                   $<        >  $<s
+	$(COMPILE)                 $<s      -o  $@s            $(INC_DIR)
+
+
+
+#===[[ HOUSEKEEPING ]]=====================================#
+
+show_vars          :
+	$(PRINTF)   "\n";
+	$(PRINTF)   "VARIABLE CONFIRMATION\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "NAME_BASE  : $(NAME_BASE)\n";
+	$(PRINTF)   "NAME_UTIL  : $(NAME_UTIL)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "LIBRARY    : $(LIBRARY)\n";
+	$(PRINTF)   "NAME_VER   : $(NAME_VER)\n";
+	$(PRINTF)   "NAME_EXE   : $(NAME_EXE)\n";
+	$(PRINTF)   "NAME_INT   : $(NAME_INT)\n";
+	$(PRINTF)   "NAME_AR    : $(NAME_AR)\n";
+	$(PRINTF)   "NAME_DEBUG : $(NAME_DEBUG)\n";
+	$(PRINTF)   "NAME_DINT  : $(NAME_DINT)\n";
+	$(PRINTF)   "NAME_DAR   : $(NAME_DAR)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "COMPILE    : $(COMPILE)\n";
+	$(PRINTF)   "COMPILE_EX : $(COMPILE_EX)\n";
+	$(PRINTF)   "INC_MINE   : $(INC_MINE)\n";
+	$(PRINTF)   "INC_DIR    : $(INC_DIR)\n";
+	$(PRINTF)   "HEADERS    : $(HEADERS)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_NORM   : $(SRC_NORM)\n";
+	$(PRINTF)   "OBJ_DEBUG  : $(OBJ_DEBUG)\n";
+	$(PRINTF)   "OBJ_NORM   : $(OBJ_NORM)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_UNIT   : $(SRC_UNIT)\n";
+	$(PRINTF)   "OBJ_UNITD  : $(OBJ_UNITD)\n";
+	$(PRINTF)   "OBJ_UNIT   : $(OBJ_UNIT)\n";
+	$(PRINTF)   "EXE_UNITD  : $(EXE_UNITD)\n";
+	$(PRINTF)   "EXE_UNIT   : $(EXE_UNIT)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_UTIL   : $(SRC_UTIL)\n";
+	$(PRINTF)   "OBJ_UTIL   : $(OBJ_UTIL)\n";
+	$(PRINTF)   "OBJ_UTILD  : $(OBJ_UTILD)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "LINKER     : $(LINKER)\n";
+	$(PRINTF)   "LIB_DIR    : $(LIB_DIR)\n";
+	$(PRINTF)   "LIB_STD    : $(LIB_STD)\n";
+	$(PRINTF)   "LIB_MINE   : $(LIB_MINE)\n";
+	$(PRINTF)   "LIB_MYUNIT : $(LIB_MYUNIT)\n";
+	$(PRINTF)   "LIB_UTIL   : $(LIB_UTIL)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "LIB_NORM   : $(LIB_NORM)\n";
+	$(PRINTF)   "LIB_DEBUG  : $(LIB_DEBUG)\n";
+	$(PRINTF)   "LIB_UNIT   : $(LIB_UNIT)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "INST_DIR   : $(INST_DIR)\n";
+	$(PRINTF)   "INST_OWNER : $(INST_OWNER)\n";
+	$(PRINTF)   "INST_PERMS : $(INST_PERMS)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "MANUALS    : $(MANUALS)\n";
+	$(PRINTF)   "EDITLIST   : $(EDITLIST)\n";
+	$(PRINTF)   "\n";
+
+
+vi_edit            :
+#	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST)
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST)
+
+vi_man             :
+#	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" $(MANUALS)
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(MANUALS)
+
+vi_unit            :
+#	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" master.unit $(SRC_UNIT)
+	vi -c "call HBUF_on()" -c "call HTAG_on()" master.unit $(SRC_RUNIT) $(SRC_LUNIT) $(SRC_SUNIT) $(SRC_MUNIT)
+
+allunits           :
+	for ENTRY in $$(ls --color=never -1 *_unit); do printf "$${ENTRY}\n"; ./$${ENTRY} --scrp; true; done
+	rm -f master.urun;
+	for ENTRY in $$(ls --color=never -1 *.urun); do printf "\n\n\n$${ENTRY}\n" >> master.urun; cat $${ENTRY} >> master.urun; done
+
+bigclean           :
+ifeq ($(LIBRARY),y)
+	${CLEAN}    lib*.so*
+	${CLEAN}    lib*.a
+else
+	$(CLEAN)    $(NAME_BASE)
+	$(CLEAN)    $(NAME_DEBUG)
+endif
+	$(CLEAN)    $(NAME_BASE)*_unit
+	$(CLEAN)    $(NAME_BASE)*_unit_debug
+	@for ENTRY in $(NAME_UTIL); do \
+	   if [[ -e "$${ENTRY}" ]]; then \
+         printf "removing %s\n" "$${ENTRY}"; \
+	      $(CLEAN)    $${ENTRY}; \
+         printf "removing %s\n" "$${ENTRY}_debug"; \
+	      $(CLEAN)    $${ENTRY}_debug; \
+      fi \
+   done
+	$(CLEAN)    .*.swp
+	$(CLEAN)    .*.swn
+	$(CLEAN)    .*.swo
+	$(CLEAN)    *.tmp
+
+unitclean          :
+	$(CLEAN)    master.h
+	$(CLEAN)    master.urun
+	$(CLEAN)    $(NAME_BASE)*_unit.code
+	$(CLEAN)    $(NAME_BASE)*_unit.c
+	$(CLEAN)    $(NAME_BASE)*.urun
+	$(CLEAN)    $(NAME_BASE)*.tmp
+	$(CLEAN)    $(NAME_BASE)*.unit.old
+	$(CLEAN)    $(NAME_BASE)*.wave
+	$(CLEAN)    $(NAME_BASE)*_unit
+	$(CLEAN)    $(NAME_BASE)*_unit_debug
+	$(CLEAN)    $(NAME_BASE)*_munit
+	$(CLEAN)    $(NAME_BASE)*_munit.o
+	$(CLEAN)    $(NAME_BASE)*_unit_debug
+
+clean              :
+	#---(object and stripped files)-------#
+	$(CLEAN)    $(NAME_BASE)*.o
+	$(CLEAN)    $(NAME_BASE)*.cs
+	$(CLEAN)    $(NAME_BASE)*.os
+	$(CLEAN)    $(NAME_BASE)*.Sc
+	$(CLEAN)    $(NAME_BASE)*.So
+	#---(created unit code)---------------#
+	$(CLEAN)    master.h
+	$(CLEAN)    master.urun
+	$(CLEAN)    $(NAME_BASE)*_unit.code
+	$(CLEAN)    $(NAME_BASE)*_unit.c
+	$(CLEAN)    $(NAME_BASE)*.urun
+	$(CLEAN)    $(NAME_BASE)*.tmp
+	$(CLEAN)    $(NAME_BASE)*.unit.old
+	$(CLEAN)    $(NAME_BASE)*.wave
+	#---(HTAG stuff)----------------------#
+	$(CLEAN)    HTAG.c
+	$(CLEAN)    HTAG.gcalls
+	$(CLEAN)    HTAG.lcalls
+	$(CLEAN)    HTAG.depth
+	$(CLEAN)    HTAG.mydepth
+	$(CLEAN)    polymnia.htags
+	$(CLEAN)    polymnia.mystry
+	$(CLEAN)    polymnia.ylib
+	#---(junk files)----------------------#
+	$(CLEAN)    2
+	$(CLEAN)    , 
+	$(CLEAN)    ,q
+	$(CLEAN)    ,qq
+	$(CLEAN)    :w
+	$(CLEAN)    :{
+	$(CLEAN)    *~
+	$(CLEAN)    temp*
+	$(CLEAN)    version.txt
+	$(CLEAN)    gdb_head
+
+deepclean          : clean bigclean unitclean
+
+
+install            : install_prep install_main install_man install_post
+
+install_main       :
+ifeq ($(LIBRARY),y)
+	@_lib      -s $(NAME_BASE)
+	@ldconfig
+	@sha1sum   /usr/local/include/$(NAME_BASE).h
+	@if [[ -e "$(NAME_BASE)_solo.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_solo.h; fi
+	@if [[ -e "$(NAME_BASE)_uver.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_uver.h; fi
+	@if [[ -e "$(NAME_BASE)_unit.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_unit.h; fi
+	@sha1sum   /usr/local/lib64/$(NAME_EXE)
+	@_lib      -a $(NAME_BASE)
+	@ldconfig
+	@sha1sum   /usr/local/lib64/$(NAME_AR)
+	@_lib      -S $(NAME_BASE)_debug
+	@ldconfig
+	@sha1sum   /usr/local/lib64/$(NAME_DEBUG)
+	@_lib      -A $(NAME_BASE)_debug
+	@ldconfig
+	@sha1sum   /usr/local/lib64/$(NAME_DAR)
+else
+	@$(COPY)     $(NAME_BASE)                 $(INST_DIR)
+	@chmod       $(INST_PERMS)                $(INST_DIR)/$(NAME_BASE)
+	@chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$(NAME_BASE)
+	@sha1sum     $(INST_DIR)/$(NAME_BASE)
+	@$(COPY)     $(NAME_DEBUG)                $(INST_DIR)
+	@chmod       $(INST_PERMS)                $(INST_DIR)/$(NAME_DEBUG)
+	@chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$(NAME_DEBUG)
+	@sha1sum     $(INST_DIR)/$(NAME_DEBUG)
+endif
+
+install_util     :
+	@for ENTRY in $(NAME_UTIL); do \
+	   if [[ -e "$${ENTRY}" ]]; then \
+	      $(COPY)     $${ENTRY}                    $(INST_DIR); \
+	      chmod       $(INST_PERMS)                $(INST_DIR)/$${ENTRY}; \
+	      chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$${ENTRY}; \
+	      sha1sum     $(INST_DIR)/$${ENTRY}; \
+	      $(COPY)     $${ENTRY}_debug              $(INST_DIR); \
+	      chmod       $(INST_PERMS)                $(INST_DIR)/$${ENTRY}_debug; \
+	      chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$${ENTRY}_debug; \
+	      sha1sum     $(INST_DIR)/$${ENTRY}_debug; \
+      fi \
+   done
+
+install_prep       :
+
+install_post       :
+
+man_post           :
+
+man_install        :
+	@for MAN in $(MANUALS); do \
+	   declare MANDIR="/usr/local/man/man$${MAN: -1:1}"; \
+ 	   declare MANBZ2="$${MAN}.bz2"; \
+      $(COPY)     $${MAN}    $${MANDIR}/; \
+      bzip2 -f    $${MANDIR}/$${MAN}; \
+      chmod 0644  $${MANDIR}/$${MANBZ2}; \
+      printf "installing manual ----------------------  %s/%s\n" "$${MANDIR}" "$${MANBZ2}"; \
+   done
+#mandb > /dev/null
+
+install_man        : man_install man_post
+
+remove             : remove_prep remove_main remove_man remove_post
+
+remove_man         :
+	@for MAN in $(MANUALS); do \
+	   declare MANDIR="/usr/share/man/man$${MAN: -1:1}"; \
+ 	   declare MANBZ2="$${MAN}.bz2"; \
+	   if [[ -e "$${MANDIR}/$${MANBZ2}" ]]; then \
+         printf "removing manual      : %s/%s\n" "$${MANDIR}" "$${MANBZ2}"; \
+         rm -f       $${MANDIR}/$${MANBZ2}; \
+      fi \
+   done
+	@for MAN in $(MANUALS); do \
+	   declare MANDIR="/usr/local/man/man$${MAN: -1:1}"; \
+ 	   declare MANBZ2="$${MAN}.bz2"; \
+	   if [[ -e "$${MANDIR}/$${MANBZ2}" ]]; then \
+         printf "removing manual      : %s/%s\n" "$${MANDIR}" "$${MANBZ2}"; \
+         rm -f       $${MANDIR}/$${MANBZ2}; \
+      fi \
+   done
+# mandb > /dev/null
+
+remove_main        :
+	#---(remove from production)----------#
+ifeq ($(LIBRARY),y)
+	_lib      -D  $(NAME_BASE)
+	_lib      -D  $(NAME_DEBUG)
+	ldconfig
+else
+	$(CLEAN)    $(INST_DIR)/$(NAME_BASE)
+	$(CLEAN)    $(INST_DIR)/$(NAME_DEBUG)
+endif
+	@for ENTRY in $(NAME_UTIL); do \
+	   if [[ -e "$(INST_DIR)/$${ENTRY}" ]]; then \
+         printf "removing utility     : %s/%s\n" "$(INST_DIR)" "$${ENTRY}"; \
+	      $(CLEAN)    $(INST_DIR)/$${ENTRY}; \
+         printf "removing utility     : %s/%s\n" "$(INST_DIR)" "$${ENTRY}_debug"; \
+	      $(CLEAN)    $(INST_DIR)/$${ENTRY}_debug; \
+      fi \
+   done
+
+remove_prep        :
+
+remove_post        :
+
+
+
+#================================[[ end-code ]]================================#

@@ -1,0 +1,11 @@
+
+LIB_BASE   = -lyLOG_debug   -lyURG_debug   -lyVAR_debug   -lySTR_debug
+LIB_FUND   = -lyMODE_debug  -lyKEYS_debug  -lyFILE_debug  -lyVIEW_debug
+LIB_MAJOR  = -lyMAP_debug   -lyCMD_debug   -lyMACRO_debug -lySRC_debug   -lyMARK_debug
+
+LIB_OGLSTD = -lX11 -lGL -lGLU -lm
+LIB_OPENGL = $(LIB_BASE) $(LIB_FUND) $(LIB_MAJOR) $(LIB_OGLSTD) -lyVIOPENGL_debug -lyX11_debug  -lyFONT_debug  -lyCOLOR_debug -lyGLTEX_debug
+
+LIB_CURSTD = -lncurses -ltinfo -lm
+LIB_CURSES = $(LIB_BASE) $(LIB_FUND) $(LIB_MAJOR) -lyVICURSES_debug
+
