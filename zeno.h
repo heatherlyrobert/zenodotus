@@ -12,7 +12,7 @@
 #define     P_NAMESAKE  "zenodotus-bibliothikarios (librarian)"
 #define     P_PRONOUNCE ""
 #define     P_TRANSLATE ""
-#define     P_HERITAGE  "first librarian of alexandria"
+#define     P_HERITAGE  "first librarian of alexandria (345-270bc) appointed in 284bc"
 #define     P_BRIEFLY   "first librarian of alexandria"
 #define     P_IMAGERY   ""
 #define     P_REASON    ""

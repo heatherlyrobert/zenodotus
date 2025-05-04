@@ -4,7 +4,7 @@
 #===(content variables)====================================#
 # starts with a 'y' means a library
 ifeq ($(shell printf "%1.1s" $(NAME_BASE)),y)
-   NAME_VER    := $(shell _libver)
+   NAME_VER    := $(shell zeno_ver)
    NAME_EXE    := $(shell printf "lib%s.so.%s.%s.%s"       "$(NAME_BASE)" "$(word 1, $(NAME_VER))" "$(word 2, $(NAME_VER))" "$(word 3, $(NAME_VER))")
    NAME_INT    := $(shell printf "lib%s.so.%s"             "$(NAME_BASE)" "$(word 1, $(NAME_VER))")
    NAME_AR     := lib$(NAME_BASE).a
@@ -97,11 +97,11 @@ TEMP       := $(sort $(wildcard $(NAME_BASE)_[A-Z]*.unit))
 SRC_LUNIT  := $(patsubst %.unit,%.unit      ,$(TEMP))
 TEMP       := $(sort $(wildcard $(NAME_BASE)*.sunit))
 SRC_SUNIT  := $(patsubst %.sunit,%.sunit    ,$(TEMP))
-
+#---(munit files)------------#
 TEMP       := $(sort $(wildcard $(NAME_BASE)*.munit))
-SRC_MUNIT  := $(patsubst %.munit,%.munit    ,$(TEMP))
-OBJ_MUNIT  := $(patsubst %.munit,%_munit.o  ,$(SRC_MUNIT))
-EXE_MUNIT  := $(patsubst %.munit,%_munit    ,$(SRC_MUNIT))
+SRC_MUNIT  := $(wildcard master.munit) $(TEMP)
+OBJ_MUNIT  := $(patsubst %.munit,%_munit.o  ,$(TEMP))
+EXE_MUNIT  := $(patsubst %.munit,%_munit    ,$(TEMP))
 
 
 
@@ -263,6 +263,10 @@ show_vars          :
 	$(PRINTF)   "EXE_UNITD  : $(EXE_UNITD)\n";
 	$(PRINTF)   "EXE_UNIT   : $(EXE_UNIT)\n";
 	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_MUNIT  : $(SRC_MUNIT)\n";
+	$(PRINTF)   "OBJ_MUNIT  : $(OBJ_MUNIT)\n";
+	$(PRINTF)   "EXE_MUNIT  : $(EXE_MUNIT)\n";
+	$(PRINTF)   "\n";
 	$(PRINTF)   "SRC_UTIL   : $(SRC_UTIL)\n";
 	$(PRINTF)   "OBJ_UTIL   : $(OBJ_UTIL)\n";
 	$(PRINTF)   "OBJ_UTILD  : $(OBJ_UTILD)\n";
@@ -335,7 +339,7 @@ unitclean          :
 	$(CLEAN)    $(NAME_BASE)*.urun
 	$(CLEAN)    $(NAME_BASE)*.tmp
 	$(CLEAN)    $(NAME_BASE)*.unit.old
-	$(CLEAN)    $(NAME_BASE)*.wave
+#	$(CLEAN)    $(NAME_BASE)*.wave
 	$(CLEAN)    $(NAME_BASE)*_unit
 	$(CLEAN)    $(NAME_BASE)*_unit_debug
 	$(CLEAN)    $(NAME_BASE)*_munit
@@ -357,7 +361,7 @@ clean              :
 	$(CLEAN)    $(NAME_BASE)*.urun
 	$(CLEAN)    $(NAME_BASE)*.tmp
 	$(CLEAN)    $(NAME_BASE)*.unit.old
-	$(CLEAN)    $(NAME_BASE)*.wave
+#	$(CLEAN)    $(NAME_BASE)*.wave
 	#---(HTAG stuff)----------------------#
 	$(CLEAN)    HTAG.c
 	$(CLEAN)    HTAG.gcalls
@@ -386,20 +390,20 @@ install            : install_prep install_main install_man install_post
 
 install_main       :
 ifeq ($(LIBRARY),y)
-	@_lib      -s $(NAME_BASE)
+	@zeno_lib  -s $(NAME_BASE)
 	@ldconfig
 	@sha1sum   /usr/local/include/$(NAME_BASE).h
 	@if [[ -e "$(NAME_BASE)_solo.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_solo.h; fi
 	@if [[ -e "$(NAME_BASE)_uver.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_uver.h; fi
 	@if [[ -e "$(NAME_BASE)_unit.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_unit.h; fi
 	@sha1sum   /usr/local/lib64/$(NAME_EXE)
-	@_lib      -a $(NAME_BASE)
+	@zeno_lib  -a $(NAME_BASE)
 	@ldconfig
 	@sha1sum   /usr/local/lib64/$(NAME_AR)
-	@_lib      -S $(NAME_BASE)_debug
+	@zeno_lib  -S $(NAME_BASE)_debug
 	@ldconfig
 	@sha1sum   /usr/local/lib64/$(NAME_DEBUG)
-	@_lib      -A $(NAME_BASE)_debug
+	@zeno_lib  -A $(NAME_BASE)_debug
 	@ldconfig
 	@sha1sum   /usr/local/lib64/$(NAME_DAR)
 else
@@ -470,8 +474,8 @@ remove_man         :
 remove_main        :
 	#---(remove from production)----------#
 ifeq ($(LIBRARY),y)
-	_lib      -D  $(NAME_BASE)
-	_lib      -D  $(NAME_DEBUG)
+	zeno_lib  -D  $(NAME_BASE)
+	zeno_lib  -D  $(NAME_DEBUG)
 	ldconfig
 else
 	$(CLEAN)    $(INST_DIR)/$(NAME_BASE)

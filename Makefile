@@ -29,6 +29,9 @@ install            :
 	@sha1sum             /usr/local/sbin/zeno_prep
 	cp -f zeno_make      /usr/local/sbin/zeno_make
 	@sha1sum             /usr/local/sbin/zeno_make
+	#---(commit)----------------------#
+	cp -f zeno_now.sh    /usr/local/sbin/zeno_now
+	@sha1sum             /usr/local/sbin/zeno_now 
 	#---(update security)-------------#
 	chown root:root      /usr/local/sbin/zeno_*
 	chmod 0755           /usr/local/sbin/zeno_*
@@ -38,6 +41,9 @@ install            :
 	#---(done)------------------------#
 
 deepclean          :
+	#---(executables)---------------------#
+	rm -f       zeno_lib
+	rm -f       zeno_ver
 	#---(object and stripped files)-------#
 	rm -f       *.o
 	rm -f       *.cs
@@ -64,5 +70,25 @@ deepclean          :
 	rm -f       gdb_head
 
 vi_edit            :
-	vi -c "call HBUF_on()" -c "call HTAG_on()" zeno.h zeno_lib.c zeno_ver.c zeno_inst.sh zeno_prep zeno_make zeno_opengl.h zeno_curses.h Makefile
+	vi -c "call HBUF_on()" -c "call HTAG_on()" zeno.h zeno_lib.c zeno_ver.c zeno_inst.sh zeno_prep zeno_make zeno_now.sh zeno_opengl.h zeno_curses.h Makefile
+
+remove             :
+	#---(new names and versions)----------#
+	rm -f       /usr/local/include/zeno_opengl.h
+	rm -f       /usr/local/include/zeno_curses.h
+	rm -f       /usr/local/sbin/zeno_lib
+	rm -f       /usr/local/sbin/zeno_ver
+	rm -f       /usr/local/sbin/zeno_inst
+	rm -f       /usr/local/sbin/zeno_prep
+	rm -f       /usr/local/sbin/zeno_make
+	rm -f       /usr/local/sbin/zeno_now
+	#---(old names and versions)----------#
+	rm -f       /usr/local/include/make_opengl.h
+	rm -f       /usr/local/include/make_curses.h
+	rm -f       /usr/local/sbin/_lib
+	rm -f       /usr/local/sbin/getver
+	rm -f       /usr/local/sbin/_inst
+	rm -f       /usr/local/sbin/make_program
+	rm -f       /usr/local/sbin/make_prepare
+	rm -f       /usr/local/sbin/git_now 
 
