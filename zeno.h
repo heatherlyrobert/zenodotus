@@ -34,9 +34,9 @@
 #define     P_CREATED   "2008-07"
 /*········· ··········· ´·····························´········································*/
 #define     P_VERMAJOR  "3.-- merging tools into new zenodotus"
-#define     P_VERMINOR  "3.0- merging"
-#define     P_VERNUM    "3.0a"
-#define     P_VERTXT    "moved from make_program and _inst projects into one place"
+#define     P_VERMINOR  "3.1- on-going updates"
+#define     P_VERNUM    "3.1a"
+#define     P_VERTXT    "added headers and footers to make output for HFIX"
 /*········· ··········· ´·····························´········································*/
 #define     P_PRIORITY  "direct, simple, brief, vigorous, and lucid (h.w. fowler)"
 #define     P_PRINCIPAL "[grow a set] and build your wings on the way down (r. bradbury)"

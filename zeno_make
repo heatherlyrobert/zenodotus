@@ -26,7 +26,8 @@ endif
 
 
 #===(compiling variables)==================================#
-COMPILE    := gcc -c -std=gnu89 -x c -g -pg -Wall -Wextra
+#COMPILE    := gcc -std=gnu89 -x c -g -pg -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -c
+COMPILE    := gcc -std=gnu89 -x c -g -pg -Wno-stringop-overflow -Wno-discarded-qualifiers -Wstrict-prototypes -Wmissing-prototypes -c
 COMPILE_EX :=
 ifeq ($(LIBRARY),y)
    COMPILE_EX := -fPIC
@@ -99,10 +100,9 @@ TEMP       := $(sort $(wildcard $(NAME_BASE)*.sunit))
 SRC_SUNIT  := $(patsubst %.sunit,%.sunit    ,$(TEMP))
 #---(munit files)------------#
 TEMP       := $(sort $(wildcard $(NAME_BASE)*.munit))
-SRC_MUNIT  := $(wildcard master.munit) $(TEMP)
+SRC_MUNIT  := $(wildcard master.munit) $(wildcard master.sh) $(TEMP)
 OBJ_MUNIT  := $(patsubst %.munit,%_munit.o  ,$(TEMP))
 EXE_MUNIT  := $(patsubst %.munit,%_munit    ,$(TEMP))
-
 
 
 #===(support file variables)===============================#
@@ -126,28 +126,24 @@ endif
 
 
 #===[[ MAIN RULE ]]========================================#
-base               : $(NAME_DEBUG) $(NAME_UTIL)
+base               : CODE_BEG $(NAME_DEBUG) $(NAME_UTIL) CODE_END
 
 util               : $(NAME_UTIL)
 
-units              : master $(EXE_UNIT) $(EXE_MUNIT)
+units              : UNIT_BEG master.h $(EXE_UNIT) $(EXE_MUNIT) UNIT_END
 
-all                : $(NAME_DEBUG) $(NAME_UTIL) $(EXE_UNIT)
+#---(master unit)---------------------#
+master.h           : master.unit
+	koios --ecode master
+#	touch $(SRC_UNIT)
 
 
 
-#===[[ EXECUTABLES ]]======================================#
+##===[[ PRODUCTION CODE ]]====================================================##
 
-#---(production version)--------------#
-#$(NAME_EXE)        : $(OBJ_DEBUG)
-#ifeq ($(LIBRARY),y)
-#	$(LINKER)  -shared -Wl,-soname,$(NAME_INT)  $(LIB_NORM)   -o $(NAME_EXE)    $(OBJ_NORM)
-#	ar         rcs                 $(NAME_AR)   $(OBJ_NORM)
-#else
-#	$(LINKER)  -o $(NAME_EXE)         $(OBJ_NORM)   $(LIB_NORM)
-#endif
+CODE_BEG          :
+	@printf "\n##===[[ CODE_BEGIN ]]=============================================================================##\n\n"
 
-#---(debug version)-------------------#
 $(NAME_DEBUG)      : $(OBJ_DEBUG)
 ifeq ($(LIBRARY),y)
 	$(LINKER)  -shared -Wl,-soname,$(NAME_DINT) $(LIB_DEBUG)  -o $(NAME_DEBUG)  $(OBJ_DEBUG)
@@ -159,17 +155,23 @@ else
 	$(LINKER)  -o $(NAME_EXE)         $(OBJ_NORM)   $(LIB_NORM)
 endif
 
+CODE_END          :
+	@printf "\n##---[[ CODE_END ]]-------------------------------------------------------------------------------##\n\n"
+
+
+
 #---(utility versions)----------------#
 $(NAME_UTIL)       : % : %.o $(OBJ_DEBUG)
 	$(LINKER)  -o $@_debug    $(OBJ_DEBUG)  $@.o          $(LIB_DEBUG)  $(LIB_UTIL)
 	$(LINKER)  -o $@          $(OBJ_NORM)   $@.os         $(LIB_NORM)   $(LIB_UTIL)
 
-#---(master unit)---------------------#
-master             : master.unit
-	koios --ecode master
 
 
-#---(unit testing)--------------------#
+##===[[ UNIT TESTING ]]=======================================================##
+
+UNIT_BEG          :
+	@printf "\n##===[[ UNIT_BEGIN ]]=============================================================================##\n\n"
+
 $(EXE_UNIT)        : %_unit : %_unit.o $(HEADERS) $(OBJ_DEBUG)
 	$(LINKER) -o $@_debug    $<   $(filter-out %_main.o,$(OBJ_DEBUG))   $(LIB_UNIT);
 	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_UNIT);
@@ -177,6 +179,11 @@ $(EXE_UNIT)        : %_unit : %_unit.o $(HEADERS) $(OBJ_DEBUG)
 $(EXE_MUNIT)       : %_munit : %_munit.o $(HEADERS) $(OBJ_DEBUG)
 	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_DEBUG) $(LIB_MYUNIT);
 	./$@ --inst  > /dev/null
+
+UNIT_END          :
+	@printf "\n##---[[ UNIT_END ]]-------------------------------------------------------------------------------##\n\n"
+
+
 
 #$(EXE_UNITD)        : %_unit : %.unit $(OBJ_NORM) $(SRC_UNIT)
 #	@printf "unit test %s %s %d\n" "$<" "$@" "$${#$@}";
@@ -202,27 +209,27 @@ $(EXE_MUNIT)       : %_munit : %_munit.o $(HEADERS) $(OBJ_DEBUG)
 
 #---(main objects)--------------------#
 $(OBJ_DEBUG)       : %.o : %.c $(HEADERS)
-	@printf "norm  %-20.20s   %-20.20s\n" "$<" "$@";
+	@printf "norm  %-30.30s   %-30.30s\n" "$<" "$@";
 	$(COMPILE) $(COMPILE_EX)   $<                          $(INC_DIR)
 	$(STRIP)                   $<        >  $<s
 	$(COMPILE) $(COMPILE_EX)   $<s      -o  $@s            $(INC_DIR)
 
 #---(main objects)--NEW-NEW-NEW-------#
 $(OBJ_UNITD)       : %_unit.o : %.unit $(HEADERS)
-	@printf "unit  %-20.20s   %-20.20s\n" "$<" "$@";
+	@printf "unit  %-30.30s   %-30.30s\n" "$<" "$@";
 	koios --edebug $(patsubst %.unit,%,$<)
 	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.c           $(INC_DIR)
 	koios --ecode  $(patsubst %.unit,%,$<)
 	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.cs  -o $@s  $(INC_DIR)
 
 $(OBJ_MUNIT)       : %_munit.o : %.munit $(HEADERS)
-	@printf "munit %-20.20s   %-20.20s\n" "$<" "$@";
+	@printf "munit %-30.30s   %-30.30s\n" "$<" "$@";
 	$(CLEAN)       $(patsubst %.munit,%,$<).wave
 	$(COMPILE)     $(patsubst %.munit,%,$<).munit   -o $(patsubst %.munit,%,$<)_munit.o         $(INC_DIR)
 
 #---(utility objects)-----------------#
 $(OBJ_UTILD)       : %.o : %.c $(HEADERS)
-	@printf "util  %-20.20s   %-20.20s\n" "$<" "$@";
+	@printf "util  %-30.30s   %-30.30s\n" "$<" "$@";
 	$(COMPILE)                 $<                          $(INC_DIR)
 	$(STRIP)                   $<        >  $<s
 	$(COMPILE)                 $<s      -o  $@s            $(INC_DIR)
@@ -293,7 +300,7 @@ show_vars          :
 
 vi_edit            :
 #	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST)
-	vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST)
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST) $(EDIT_TOO)
 
 vi_man             :
 #	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" $(MANUALS)
@@ -301,14 +308,23 @@ vi_man             :
 
 vi_unit            :
 #	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" master.unit $(SRC_UNIT)
-	vi -c "call HBUF_on()" -c "call HTAG_on()" master.unit $(SRC_RUNIT) $(SRC_LUNIT) $(SRC_SUNIT) $(SRC_MUNIT)
+	vi -c "call HBUF_on()" -c "call HTAG_on()" master.unit $(SRC_RUNIT) $(SRC_LUNIT) $(SRC_SUNIT) $(SRC_MUNIT) master.c
 
 allunits           :
 	for ENTRY in $$(ls --color=never -1 *_unit); do printf "$${ENTRY}\n"; ./$${ENTRY} --scrp; true; done
 	rm -f master.urun;
 	for ENTRY in $$(ls --color=never -1 *.urun); do printf "\n\n\n$${ENTRY}\n" >> master.urun; cat $${ENTRY} >> master.urun; done
 
-bigclean           :
+
+
+
+
+##===[[ CLEAN/WIPE ]]=========================================================##
+
+WIPE_BEG           :
+	@printf "\n##===[[ WIPE_BEGIN ]==============================================================================##\n\n"
+
+large_clean        :
 ifeq ($(LIBRARY),y)
 	${CLEAN}    lib*.so*
 	${CLEAN}    lib*.a
@@ -331,22 +347,20 @@ endif
 	$(CLEAN)    .*.swo
 	$(CLEAN)    *.tmp
 
-unitclean          :
-	$(CLEAN)    master.h
+unit_clean         :
 	$(CLEAN)    master.urun
 	$(CLEAN)    $(NAME_BASE)*_unit.code
 	$(CLEAN)    $(NAME_BASE)*_unit.c
 	$(CLEAN)    $(NAME_BASE)*.urun
 	$(CLEAN)    $(NAME_BASE)*.tmp
 	$(CLEAN)    $(NAME_BASE)*.unit.old
-#	$(CLEAN)    $(NAME_BASE)*.wave
 	$(CLEAN)    $(NAME_BASE)*_unit
 	$(CLEAN)    $(NAME_BASE)*_unit_debug
 	$(CLEAN)    $(NAME_BASE)*_munit
 	$(CLEAN)    $(NAME_BASE)*_munit.o
 	$(CLEAN)    $(NAME_BASE)*_unit_debug
 
-clean              :
+small_clean        :
 	#---(object and stripped files)-------#
 	$(CLEAN)    $(NAME_BASE)*.o
 	$(CLEAN)    $(NAME_BASE)*.cs
@@ -361,7 +375,13 @@ clean              :
 	$(CLEAN)    $(NAME_BASE)*.urun
 	$(CLEAN)    $(NAME_BASE)*.tmp
 	$(CLEAN)    $(NAME_BASE)*.unit.old
-#	$(CLEAN)    $(NAME_BASE)*.wave
+	#---(HFIX stuff)----------------------#
+	$(CLEAN)    HFIX.log
+	$(CLEAN)    HFIX.out
+	$(CLEAN)    HFIX.buf
+	$(CLEAN)    /tmp/HFIX.log
+	$(CLEAN)    /tmp/HFIX.out
+	$(CLEAN)    /tmp/HFIX.buf
 	#---(HTAG stuff)----------------------#
 	$(CLEAN)    HTAG.c
 	$(CLEAN)    HTAG.gcalls
@@ -383,10 +403,22 @@ clean              :
 	$(CLEAN)    version.txt
 	$(CLEAN)    gdb_head
 
-deepclean          : clean bigclean unitclean
+WIPE_END           :
+	@printf "\n##---[[ WIPE_END ]]-------------------------------------------------------------------------------##\n\n"
+
+clean              : WIPE_BEG small_clean WIPE_END
+
+deepclean          : WIPE_BEG small_clean large_clean unit_clean WIPE_END
 
 
-install            : install_prep install_main install_man install_post
+
+
+##===[[ INSTALLATION ]]=======================================================##
+
+install            : INST_BEG install_prep install_main install_man install_post INST_END
+
+INST_BEG           :
+	@printf "\n##===[[ INST_BEGIN ]==============================================================================##\n\n"
 
 install_main       :
 ifeq ($(LIBRARY),y)
@@ -435,6 +467,15 @@ install_prep       :
 
 install_post       :
 
+INST_END           :
+	@printf "\n##---[[ INST_END ]]-------------------------------------------------------------------------------##\n\n"
+
+
+
+
+MANS_BEG          :
+	@printf "\n##===[[ MANS_BEGIN ]]=============================================================================##\n\n"
+
 man_post           :
 
 man_install        :
@@ -449,6 +490,13 @@ man_install        :
 #mandb > /dev/null
 
 install_man        : man_install man_post
+
+manuals            : MANS_BEG man_install man_post MANS_END
+
+MANS_END          :
+	@printf "\n##---[[ MANS_END ]]-------------------------------------------------------------------------------##\n\n"
+
+
 
 remove             : remove_prep remove_main remove_man remove_post
 
@@ -494,6 +542,8 @@ remove_prep        :
 
 remove_post        :
 
+
+all                : base install units man_install
 
 
 #================================[[ end-code ]]================================#

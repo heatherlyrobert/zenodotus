@@ -25,7 +25,7 @@ main                    (void)
    char       *p           = NULL;
    char       *r           = NULL;
    /*---(extract version)----------------*/
-   snprintf (x_cmd, 200, "grep \"P_VERNUM\" y*.h > version.txt  2> /dev/null");
+   snprintf (x_cmd, 200, "grep \"P_VERNUM\" *.h > version.txt  2> /dev/null");
    rc = system (x_cmd);
    --rce;  if (rc != 0)         return cleanup (rce);
    /*---(read in)------------------------*/
