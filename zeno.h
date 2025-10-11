@@ -35,8 +35,8 @@
 /*········· ··········· ´·····························´········································*/
 #define     P_VERMAJOR  "3.-- merging tools into new zenodotus"
 #define     P_VERMINOR  "3.1- on-going updates"
-#define     P_VERNUM    "3.1a"
-#define     P_VERTXT    "added headers and footers to make output for HFIX"
+#define     P_VERNUM    "3.1b"
+#define     P_VERTXT    "verifying up-to-date"
 /*········· ··········· ´·····························´········································*/
 #define     P_PRIORITY  "direct, simple, brief, vigorous, and lucid (h.w. fowler)"
 #define     P_PRINCIPAL "[grow a set] and build your wings on the way down (r. bradbury)"

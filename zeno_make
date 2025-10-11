@@ -124,7 +124,6 @@ endif
 
 
 
-
 #===[[ MAIN RULE ]]========================================#
 base               : CODE_BEG $(NAME_DEBUG) $(NAME_UTIL) CODE_END
 
@@ -142,28 +141,37 @@ master.h           : master.unit
 ##===[[ PRODUCTION CODE ]]====================================================##
 
 CODE_BEG          :
-	@printf "\n##===[[ CODE_BEGIN ]]=============================================================================##\n\n"
+	@printf "\n##===[[ COMP_BEGIN ]]=============================================================================##\n\n"
 
 $(NAME_DEBUG)      : $(OBJ_DEBUG)
 ifeq ($(LIBRARY),y)
+	@printf "#´´´((lib-debug))´´´´´´´´´´´´´´´´> lib$(NAME_BASE)                  \n"
 	$(LINKER)  -shared -Wl,-soname,$(NAME_DINT) $(LIB_DEBUG)  -o $(NAME_DEBUG)  $(OBJ_DEBUG)
 	ar         rcs                 $(NAME_DAR)  $(OBJ_DEBUG)
+	@printf "#´´´((lib-prod))´´´´´´´´´´´´´´´´´> lib$(NAME_BASE)                 \n"
 	$(LINKER)  -shared -Wl,-soname,$(NAME_INT)  $(LIB_NORM)   -o $(NAME_EXE)    $(OBJ_NORM)
 	ar         rcs                 $(NAME_AR)   $(OBJ_NORM)
+	@printf "#´´´((lib-done))´´´´´´´´´´´´´´´´´> lib$(NAME_BASE)                 \n"
 else
+	@printf "#´´´((exec-debug))´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
 	$(LINKER)  -o $(NAME_DEBUG)       $(OBJ_DEBUG)  $(LIB_DEBUG)
+	@printf "#´´´((exec-prod))´´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
 	$(LINKER)  -o $(NAME_EXE)         $(OBJ_NORM)   $(LIB_NORM)
+	@printf "#´´´((exec-done))´´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
 endif
 
 CODE_END          :
-	@printf "\n##---[[ CODE_END ]]-------------------------------------------------------------------------------##\n\n"
+	@printf "\n##===[[ COMP_END ]]===============================================================================##\n\n"
 
 
 
 #---(utility versions)----------------#
 $(NAME_UTIL)       : % : %.o $(OBJ_DEBUG)
+	@printf "#´´´((util-debug))´´´´´´´´´´´´´´´> $@                              \n"
 	$(LINKER)  -o $@_debug    $(OBJ_DEBUG)  $@.o          $(LIB_DEBUG)  $(LIB_UTIL)
+	@printf "#´´´((util-prod))´´´´´´´´´´´´´´´´> $@                              \n"
 	$(LINKER)  -o $@          $(OBJ_NORM)   $@.os         $(LIB_NORM)   $(LIB_UTIL)
+	@printf "#´´´((util-done))´´´´´´´´´´´´´´´´> $@                              \n"
 
 
 
@@ -173,15 +181,20 @@ UNIT_BEG          :
 	@printf "\n##===[[ UNIT_BEGIN ]]=============================================================================##\n\n"
 
 $(EXE_UNIT)        : %_unit : %_unit.o $(HEADERS) $(OBJ_DEBUG)
+	@printf "#´´´((unit-debug))´´´´´´´´´´´´´´´> $@                              \n"
 	$(LINKER) -o $@_debug    $<   $(filter-out %_main.o,$(OBJ_DEBUG))   $(LIB_UNIT);
+	@printf "#´´´((unit-prod))´´´´´´´´´´´´´´´´> $@                              \n"
 	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_UNIT);
+	@printf "#´´´((unit-complete))´´´´´´´´´´´´> $@                              \n"
 
 $(EXE_MUNIT)       : %_munit : %_munit.o $(HEADERS) $(OBJ_DEBUG)
+	@printf "#´´´((munit-prod))´´´´´´´´´´´´´´´> $@                              \n"
 	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_DEBUG) $(LIB_MYUNIT);
 	./$@ --inst  > /dev/null
+	@printf "#´´´((munit-complete))´´´´´´´´´´´> $@                              \n"
 
 UNIT_END          :
-	@printf "\n##---[[ UNIT_END ]]-------------------------------------------------------------------------------##\n\n"
+	@printf "\n##===[[ UNIT_END ]]===============================================================================##\n\n"
 
 
 
@@ -203,36 +216,44 @@ UNIT_END          :
 #	 $(LINKER) -o $${UNIT_ENTRY}_debug $${UNIT_ENTRY}.o $(OBJ_UNITD) $(LIB_UNIT);
 
 
+#´´´((norm··start))´´´´´´´´´´´´´´´> %-30.30s to %-30.30s\n" "$<" "$@"
 
 #===[[ OBJECT FILES ]]=====================================#
 # library files need -fPIC which will be in COMPILE_EX (if a lib) or blank if normal
 
 #---(main objects)--------------------#
 $(OBJ_DEBUG)       : %.o : %.c $(HEADERS)
-	@printf "norm  %-30.30s   %-30.30s\n" "$<" "$@";
+	@printf "#´´´((norm-start))´´´´´´´´´´´´´´´> $<                               \n"
 	$(COMPILE) $(COMPILE_EX)   $<                          $(INC_DIR)
+	@printf "#´´´((norm-stripped))´´´´´´´´´´´´> $<                               \n"
 	$(STRIP)                   $<        >  $<s
 	$(COMPILE) $(COMPILE_EX)   $<s      -o  $@s            $(INC_DIR)
+	@printf "#´´´((norm-complete))´´´´´´´´´´´´> $<                               \n"
 
 #---(main objects)--NEW-NEW-NEW-------#
 $(OBJ_UNITD)       : %_unit.o : %.unit $(HEADERS)
-	@printf "unit  %-30.30s   %-30.30s\n" "$<" "$@";
+	@printf "#´´´((unit-start))´´´´´´´´´´´´´´´> $<                               \n"
 	koios --edebug $(patsubst %.unit,%,$<)
 	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.c           $(INC_DIR)
+	@printf "#´´´((unit-stripped))´´´´´´´´´´´´> $<                               \n"
 	koios --ecode  $(patsubst %.unit,%,$<)
 	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.cs  -o $@s  $(INC_DIR)
+	@printf "#´´´((unit-midpoint))´´´´´´´´´´´´> $<                               \n"
 
 $(OBJ_MUNIT)       : %_munit.o : %.munit $(HEADERS)
-	@printf "munit %-30.30s   %-30.30s\n" "$<" "$@";
+	@printf "#´´´((munit-start))´´´´´´´´´´´´´´> $<                               \n"
 	$(CLEAN)       $(patsubst %.munit,%,$<).wave
 	$(COMPILE)     $(patsubst %.munit,%,$<).munit   -o $(patsubst %.munit,%,$<)_munit.o         $(INC_DIR)
+	@printf "#´´´((munit-complete)´´´´´´´´´´´´> $<                               \n"
 
 #---(utility objects)-----------------#
 $(OBJ_UTILD)       : %.o : %.c $(HEADERS)
-	@printf "util  %-30.30s   %-30.30s\n" "$<" "$@";
+	@printf "#´´´((util-start))´´´´´´´´´´´´´´´> $<                               \n"
 	$(COMPILE)                 $<                          $(INC_DIR)
+	@printf "#´´´((util-stripped))´´´´´´´´´´´´> $<                               \n"
 	$(STRIP)                   $<        >  $<s
 	$(COMPILE)                 $<s      -o  $@s            $(INC_DIR)
+	@printf "#´´´((util-complete))´´´´´´´´´´´´> $<                               \n"
 
 
 
@@ -404,7 +425,7 @@ small_clean        :
 	$(CLEAN)    gdb_head
 
 WIPE_END           :
-	@printf "\n##---[[ WIPE_END ]]-------------------------------------------------------------------------------##\n\n"
+	@printf "\n##===[[ WIPE_END ]]===============================================================================##\n\n"
 
 clean              : WIPE_BEG small_clean WIPE_END
 
@@ -422,44 +443,55 @@ INST_BEG           :
 
 install_main       :
 ifeq ($(LIBRARY),y)
+	@printf "#´´´((inst-lib-start))´´´´´´´´´´´> $(NAME_BASE)                     \n"
 	@zeno_lib  -s $(NAME_BASE)
 	@ldconfig
+	@printf "#´´´((inst-lib-headers)´´´´´´´´´´> $(NAME_BASE)                     \n"
 	@sha1sum   /usr/local/include/$(NAME_BASE).h
 	@if [[ -e "$(NAME_BASE)_solo.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_solo.h; fi
 	@if [[ -e "$(NAME_BASE)_uver.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_uver.h; fi
 	@if [[ -e "$(NAME_BASE)_unit.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_unit.h; fi
+	@printf "#´´´((inst-lib-prod))´´´´´´´´´´´´> $(NAME_BASE)                     \n"
 	@sha1sum   /usr/local/lib64/$(NAME_EXE)
 	@zeno_lib  -a $(NAME_BASE)
 	@ldconfig
 	@sha1sum   /usr/local/lib64/$(NAME_AR)
 	@zeno_lib  -S $(NAME_BASE)_debug
 	@ldconfig
+	@printf "#´´´((inst-lib-debug))´´´´´´´´´´´> $(NAME_BASE)                     \n"
 	@sha1sum   /usr/local/lib64/$(NAME_DEBUG)
 	@zeno_lib  -A $(NAME_BASE)_debug
 	@ldconfig
 	@sha1sum   /usr/local/lib64/$(NAME_DAR)
+	@printf "#´´´((inst-lib-done))´´´´´´´´´´´´> $(NAME_BASE)                     \n"
 else
+	@printf "#´´´((inst-exec-prod))´´´´´´´´´´´> $(NAME_BASE)                     \n"
 	@$(COPY)     $(NAME_BASE)                 $(INST_DIR)
 	@chmod       $(INST_PERMS)                $(INST_DIR)/$(NAME_BASE)
 	@chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$(NAME_BASE)
 	@sha1sum     $(INST_DIR)/$(NAME_BASE)
+	@printf "#´´´((inst-exec-debug))´´´´´´´´´´> $(NAME_BASE)                     \n"
 	@$(COPY)     $(NAME_DEBUG)                $(INST_DIR)
 	@chmod       $(INST_PERMS)                $(INST_DIR)/$(NAME_DEBUG)
 	@chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$(NAME_DEBUG)
 	@sha1sum     $(INST_DIR)/$(NAME_DEBUG)
+	@printf "#´´´((inst-exec-done))´´´´´´´´´´´> $(NAME_BASE)                     \n"
 endif
 
 install_util     :
 	@for ENTRY in $(NAME_UTIL); do \
 	   if [[ -e "$${ENTRY}" ]]; then \
+	      @printf "#´´´((inst-util-prod))´´´´´´´´´´´> $${ENTRY}                        \n"; \
 	      $(COPY)     $${ENTRY}                    $(INST_DIR); \
 	      chmod       $(INST_PERMS)                $(INST_DIR)/$${ENTRY}; \
 	      chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$${ENTRY}; \
 	      sha1sum     $(INST_DIR)/$${ENTRY}; \
+	      @printf "#´´´((inst-util-debug))´´´´´´´´´´> $${ENTRY}                        \n"; \
 	      $(COPY)     $${ENTRY}_debug              $(INST_DIR); \
 	      chmod       $(INST_PERMS)                $(INST_DIR)/$${ENTRY}_debug; \
 	      chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$${ENTRY}_debug; \
 	      sha1sum     $(INST_DIR)/$${ENTRY}_debug; \
+	      @printf "#´´´((inst-util-done))´´´´´´´´´´´> $${ENTRY}                        \n" \
       fi \
    done
 
@@ -468,7 +500,7 @@ install_prep       :
 install_post       :
 
 INST_END           :
-	@printf "\n##---[[ INST_END ]]-------------------------------------------------------------------------------##\n\n"
+	@printf "\n##===[[ INST_END ]]===============================================================================##\n\n"
 
 
 
@@ -480,13 +512,15 @@ man_post           :
 
 man_install        :
 	@for MAN in $(MANUALS); do \
+	   printf "#´´´((mans-start)´´´´´´´´´´´´´´´´> $${MAN}                          \n"; \
 	   declare MANDIR="/usr/local/man/man$${MAN: -1:1}"; \
- 	   declare MANBZ2="$${MAN}.bz2"; \
-      $(COPY)     $${MAN}    $${MANDIR}/; \
-      bzip2 -f    $${MANDIR}/$${MAN}; \
-      chmod 0644  $${MANDIR}/$${MANBZ2}; \
-      printf "installing manual ----------------------  %s/%s\n" "$${MANDIR}" "$${MANBZ2}"; \
-   done
+	   declare MANBZ2="$${MAN}.bz2"; \
+	  	$(COPY)     $${MAN}    $${MANDIR}/; \
+	  	bzip2 -f    $${MANDIR}/$${MAN}; \
+	  	chmod 0644  $${MANDIR}/$${MANBZ2}; \
+	  	sha1sum     $${MANDIR}/$${MANBZ2}; \
+	   printf "#´´´((mans-done)´´´´´´´´´´´´´´´´´> $${MAN}                          \n"; \
+	done
 #mandb > /dev/null
 
 install_man        : man_install man_post
@@ -494,7 +528,7 @@ install_man        : man_install man_post
 manuals            : MANS_BEG man_install man_post MANS_END
 
 MANS_END          :
-	@printf "\n##---[[ MANS_END ]]-------------------------------------------------------------------------------##\n\n"
+	@printf "\n##===[[ MANS_END ]]===============================================================================##\n\n"
 
 
 
