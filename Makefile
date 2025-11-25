@@ -40,6 +40,12 @@ install            :
 	chmod +s             /usr/local/sbin/zeno_ver
 	#---(done)------------------------#
 
+units              :
+	cp  -f zeno_make.munit zeno_make.c
+	gcc -c zeno_make.c      -o zeno_make.o
+	gcc -o zeno_make_munit     zeno_make.o  -lyUNIT -lyVAR -lyLOG -lyURG
+	rm  -f zeno_make.c
+
 deepclean          :
 	#---(executables)---------------------#
 	rm -f       zeno_lib
@@ -71,6 +77,9 @@ deepclean          :
 
 vi_edit            :
 	vi -c "call HBUF_on()" -c "call HTAG_on()" zeno.h zeno_lib.c zeno_ver.c zeno_inst.sh zeno_prep zeno_make zeno_now.sh zeno_opengl.h zeno_curses.h Makefile
+
+vi_unit            :
+	vi -c "call HBUF_on()" -c "call HTAG_on()" unit_head.munit zeno_make.munit
 
 remove             :
 	#---(new names and versions)----------#

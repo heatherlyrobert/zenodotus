@@ -1,0 +1,458 @@
+#include "unit_head.munit"
+
+char
+zeno_make_all_sources   (void)
+{
+   MUNIT__create_makefile  ();
+
+   MUNIT__create_header    ();
+
+   MUNIT__create_uhead     ('b', "unit_head.unit");
+
+   MUNIT__create_uwide     ('b', "unit_wide.unit");
+
+   MUNIT__create_udata     ('b', "unit_data.unit");
+
+   MUNIT__create_ucode     ('b');
+
+   MUNIT__create_projs     ('s');
+
+   MUNIT__create_files     ('s');
+
+   MUNIT__create_funcs     ('s');
+
+   return 1;
+}
+
+
+char
+zeno_make_uhead         (char a_scrp, char a_list, char a_unit)
+{
+   char        t           [LEN_RECD]  = "";
+
+   yUNIT_minscrpy ("zeno" , "zeno_make" , "(MAKE) verify unit_head updates");
+   if (a_list == '!')    { yUNIT_minprcs (); return 0; }
+   if (a_unit != 0 && a_scrp != a_unit)  return 0;
+   if (a_list == 'y')                    return 0;
+   MUNIT__scrp_start ();
+
+   MUNIT__create_makefile  ();
+
+   yUNIT_mincond  ("attempt to make unit_head.h without unit_head.unit");
+   sprintf (t, "make %s > %s  2>&1", sm_hhead, sm_output);
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.unit")  ,  '-');
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.h")     ,  '-');
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: *** No rule to make target 'unit_head.unit', needed by 'unit_head.h'.  Stop.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.unit")  ,  '-');
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.h")     ,  '-');
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_uhead     ('b', "unit_head.unit");
+
+   yUNIT_mincond  ("attempt to make it when it is already current");
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.unit")  ,  'r');
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.h")     ,  'r');
+   sprintf (t, "make %s > %s  2>&1", sm_hhead, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: 'unit_head.h' is up to date.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.unit")  ,  'r');
+   yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.h")     ,  'r');
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify updating timestamp on unit_head.unit");
+   sprintf (t, "touch %s", sm_uhead);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_uhead     ('c', "unit_head.unit");
+
+   MUNIT__scrp_finish ();
+   yUNIT_minprcs  ();
+   return 0;
+}
+
+char
+zeno_make_ushared        (char a_scrp, char a_list, char a_unit)
+{
+   char        t           [LEN_RECD]  = "";
+
+   yUNIT_minscrpy ("zeno" , "zeno_make" , "(MAKE) verify unit_wide, unit_data updates");
+   if (a_list == '!')    { yUNIT_minprcs (); return 0; }
+   if (a_unit != 0 && a_scrp != a_unit)  return 0;
+   if (a_list == 'y')                    return 0;
+   MUNIT__scrp_start ();
+
+   MUNIT__create_makefile  ();
+
+   MUNIT__create_header    ();
+
+   MUNIT__create_uhead     ('b', "unit_head.unit");
+
+   yUNIT_mincond  ("attempt to make unit_wide.o without unit_wide.unit");
+   sprintf (t, "make %s > %s  2>&1", sm_owide, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: *** No rule to make target 'unit_wide.o'.  Stop.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_wide.os")    ,  '-');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_wide.o")     ,  '-');
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_uwide     ('b', "unit_wide.unit");
+
+   yUNIT_mincond  ("attempt to make it when it is already current");
+   sprintf (t, "make %s > %s  2>&1", sm_owide, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: 'unit_wide.o' is up to date.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_wide.os")    ,  'r');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_wide.o")     ,  's');
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify updating after unit_wide.unit is updated");
+   sprintf (t, "touch %s", sm_uwide);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_uwide     ('c', "unit_wide.unit");
+
+   yUNIT_mincond  ("verify updating unit_wide.o after unit_head.unit is updated");
+   sprintf (t, "touch %s", sm_uhead);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   sprintf (t, "make %s > %s  2>&1", sm_owide, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    8);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-head-start))´´´´´´´´´´> unit_head.h ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   unit_head");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-head-complete))´´´´´´´> unit_head.h ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-libs-start))´´´´´´´´´´> unit_wide.o ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   unit_wide");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "ln --symbolic ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-libs-complete))´´´´´´´> unit_wide.o ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("attempt to make unit_data.o without unit_data.unit");
+   sprintf (t, "make %s > %s  2>&1", sm_odata, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: *** No rule to make target 'unit_data.o'.  Stop.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.os")    ,  '-');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.o")     ,  '-');
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_udata     ('b', "unit_data.unit");
+
+   yUNIT_mincond  ("attempt to make it when it is already current");
+   sprintf (t, "make %s > %s  2>&1", sm_odata, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: 'unit_data.o' is up to date.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.os")    ,  'r');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.o")     ,  's');
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify updating after unit_data.unit is updated");
+   sprintf (t, "touch %s", sm_udata);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_udata     ('c', "unit_data.unit");
+
+   yUNIT_mincond  ("verify updating unit_data.o after unit_head.unit is updated");
+   sprintf (t, "touch %s", sm_uhead);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   sprintf (t, "make %s > %s  2>&1", sm_odata, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    8);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-head-start))´´´´´´´´´´> unit_head.h ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   unit_head");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-head-complete))´´´´´´´> unit_head.h ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-libs-start))´´´´´´´´´´> unit_data.o ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   unit_data");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "ln --symbolic ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-libs-complete))´´´´´´´> unit_data.o ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   MUNIT__scrp_finish ();
+   yUNIT_minprcs  ();
+   return 0;
+}
+
+char
+zeno_make_ucode         (char a_scrp, char a_list, char a_unit)
+{
+   char        t           [LEN_RECD]  = "";
+
+   yUNIT_minscrpy ("zeno" , "zeno_make" , "(MAKE) verify unit_code updates");
+   if (a_list == '!')    { yUNIT_minprcs (); return 0; }
+   if (a_unit != 0 && a_scrp != a_unit)  return 0;
+   if (a_list == 'y')                    return 0;
+   MUNIT__scrp_start ();
+
+   MUNIT__create_makefile  ();
+
+   MUNIT__create_header    ();
+
+   yUNIT_mincond  ("attempt to make unit_code.o without unit_code.h");
+   sprintf (t, "make %s > %s  2>&1", sm_ocode, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: *** No rule to make target 'unit_code.o'.  Stop.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_code.os")    ,  '-');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_code.o")     ,  '-');
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("make unit_test.h");
+   sprintf (t, "touch %s", sm_hcode);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("attempt to make unit_code.o without unit_code.c");
+   sprintf (t, "make %s > %s  2>&1", sm_ocode, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: *** No rule to make target 'unit_code.o'.  Stop.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_code.os")    ,  '-');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_code.o")     ,  '-');
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_ucode     ('b');
+
+   yUNIT_mincond  ("attempt to update when files are current");
+   sprintf (t, "make %s > %s  2>&1", sm_ocode, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: 'unit_code.o' is up to date.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.os")    ,  '-');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.o")     ,  '-');
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify updating because unit_code.h updated");
+   sprintf (t, "touch %s", sm_hcode);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_ucode     ('c');
+
+   yUNIT_mincond  ("verify updating because unit_code.c updated");
+   sprintf (t, "touch %s", sm_ccode);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_ucode     ('c');
+
+   yUNIT_mincond  ("verify does not update with unit_head.unit changed");
+   sprintf (t, "touch %s", sm_uhead);
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   sprintf (t, "make %s > %s  2>&1", sm_ocode, sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "make: 'unit_code.o' is up to date.");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.os")    ,  '-');
+   yUNIT_minval   ("check for result"                   , yenv_uexists ("unit_data.o")     ,  '-');
+   yUNIT_mindnoc  ();
+
+   MUNIT__scrp_finish ();
+   yUNIT_minprcs  ();
+   return 0;
+}
+
+char
+zeno_make_full          (char a_scrp, char a_list, char a_unit)
+{
+   char        t           [LEN_RECD]  = "";
+
+   yUNIT_minscrpy ("zeno" , "zeno_make" , "(MAKE) verify unit test object updates");
+   if (a_list == '!')    { yUNIT_minprcs (); return 0; }
+   if (a_unit != 0 && a_scrp != a_unit)  return 0;
+   if (a_list == 'y')                    return 0;
+   MUNIT__scrp_start ();
+
+   MUNIT__create_makefile  ();
+
+   MUNIT__create_header    ();
+
+   MUNIT__create_uhead     ('b', "unit_head.unit");
+
+   MUNIT__create_uwide     ('b', "unit_wide.unit");
+
+   MUNIT__create_udata     ('b', "unit_data.unit");
+
+   MUNIT__create_ucode     ('b');
+
+   MUNIT__create_projs     ('b');
+
+   MUNIT__create_files     ('b');
+
+   MUNIT__create_funcs     ('b');
+
+   MUNIT__create_main      ('b');
+
+   MUNIT__create_uprojs    ('b');
+
+   MUNIT__create_ufiles    ('b');
+
+   MUNIT__create_ufuncs    ('b');
+
+   yUNIT_mincond  ("verify unit tests are current");
+   sprintf (t, "make units > %s  2>&1", sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    6);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ UNIT_BEGIN ]]==============================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ UNIT_END ]]================================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify updating because polymnia_main.c updated");
+   sprintf (t, "touch polymnia_main.c");
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_mindnoc  ();
+
+   MUNIT__create_main      ('c');
+
+   yUNIT_mincond  ("verify does not update without changes");
+   sprintf (t, "make > %s  2>&1", sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    6);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ COMP_BEGIN ]]==============================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ COMP_END ]]================================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify does not update without changes");
+   sprintf (t, "make units > %s  2>&1", sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    6);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ UNIT_BEGIN ]]==============================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ UNIT_END ]]================================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify updating because polymnia_projs.unit updated");
+   sprintf (t, "touch polymnia_projs.unit");
+   yUNIT_minstr   ("creat touch command"                , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,  666);
+   sprintf (t, "make units > %s  2>&1", sm_output);
+   yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+   yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+   yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),   18);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ UNIT_BEGIN ]]==============================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-start))´´´´´´´´´´> polymnia_projs_unit.o ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --debug  polymnia_projs");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-stripped))´´´´´´´> polymnia_projs_unit.o ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   polymnia_projs");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-complete))´´´´´´´> polymnia_projs_unit.o ¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-debug))´´´´´´´´´´´´´´´> polymnia_projs_unit ¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-prod))´´´´´´´´´´´´´´´´> polymnia_projs_unit ¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-complete))´´´´´´´´´´´´> polymnia_projs_unit ¬¬¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ UNIT_END ]]================================¬¬¬¬¬¬");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+   yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofuncs)         ,  'r');
+   yUNIT_mindnoc  ();
+
+   MUNIT__scrp_finish ();
+   yUNIT_minprcs  ();
+   return 0;
+}
+
+
+char
+main                    (int a_argc, char *a_argv [])
+{
+   /*---(locals)-----------+-----+-----+-*/
+   int         x_unit      =    0;
+   int         n           =    0;
+   char        x_list      =    0;
+   /*---(arguments)----------------------*/
+   /*> printf ("## pre-yUNIT unit testing : %s\n", a_argv [0]);                       <*/
+   if (a_argc >= 2) {
+      if (strcmp (a_argv [1], "--list") == 0)       x_list = 'y';
+      else if (strcmp (a_argv [1], "--inst") == 0)  x_list = '!';
+      else                                          x_unit = atoi (a_argv [1]);
+   }
+   /*> if (x_unit  >  0 )         printf ("## selected single script (%2d)\n", x_unit);   <* 
+    *> else                       printf ("## selected all scripts\n");                   <* 
+    *> if (x_list == 'y')         printf ("## list script(s) only\n");                    <* 
+    *> else if (x_list == '!')    printf ("## generate initial wave file\n");             <* 
+    *> else                       printf ("## execute conditions and steps\n");           <* 
+    *> printf ("\n");                                                                     <*/
+   /*---(startup)------------------------*/
+   yUNIT_minunit ("zeno_make");
+   /*---(scripts)------------------------*/
+   zeno_make_uhead         (++n, x_list, x_unit);
+   zeno_make_ushared       (++n, x_list, x_unit);
+   zeno_make_ucode         (++n, x_list, x_unit);
+   zeno_make_full          (++n, x_list, x_unit);
+   /*---(wrapup)-------------------------*/
+   yUNIT_mintinu    ();
+   /*---(complete)-----------------------*/
+   return 0;
+}
+

@@ -1,6 +1,9 @@
 #================================[[ beg-code ]]================================#
 
 
+
+##===[[ PREPARATION ]]========================================================##
+
 #===(content variables)====================================#
 # starts with a 'y' means a library
 ifeq ($(shell printf "%1.1s" $(NAME_BASE)),y)
@@ -24,10 +27,28 @@ else
    DEBUG_VER  := y
 endif
 
+#===(unit testing support)=================================#
+UNIT_HEAD   := $(wildcard unit_head.unit)
+ifeq ($(UNIT_HEAD),unit_head.unit)
+   UNIT_HEADH  := "unit_head.h"
+else
+   UNIT_HEADH  := ""
+endif
+UNIT_DEFS   := $(wildcard unit_code.h)
+UNIT_CODE   := $(wildcard unit_code.c)
+UNIT_WIDE   := $(wildcard unit_wide.unit)
+UNIT_DATA   := $(wildcard unit_data.unit)
+#---(sources)----------------#
+UNIT_SRC    := $(UNIT_WIDE) $(UNIT_DATA)
+#---(objects)----------------#
+UNIT_OBJC   := $(patsubst %.c,%.o       ,$(UNIT_CODE))
+UNIT_OBJD   := $(patsubst %.unit,%.o    ,$(UNIT_SRC))
+UNIT_OBJ    := $(patsubst %.unit,%.os   ,$(UNIT_SRC))
 
 #===(compiling variables)==================================#
 #COMPILE    := gcc -std=gnu89 -x c -g -pg -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -c
-COMPILE    := gcc -std=gnu89 -x c -g -pg -Wno-stringop-overflow -Wno-discarded-qualifiers -Wstrict-prototypes -Wmissing-prototypes -c
+#COMPILE    := gcc -std=gnu89 -x c -g -pg -Wno-stringop-overflow -Wno-discarded-qualifiers -Wstrict-prototypes -Wmissing-prototypes -c
+COMPILE    := gcc -std=gnu89 -x c -g -pg -Wno-stringop-overflow -Wno-discarded-qualifiers -Wno-strict-prototypes -Wno-missing-prototypes -c
 COMPILE_EX :=
 ifeq ($(LIBRARY),y)
    COMPILE_EX := -fPIC
@@ -40,106 +61,238 @@ LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE) -lyURG_debug -lyLOG_debug
 ifeq ($(NAME_BASE),yVAR)
    LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
 endif
-ifeq ($(NAME_BASE),yUNIT)
-   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
-endif
-ifeq ($(NAME_BASE),koios)
-   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
-endif
+#ifeq ($(NAME_BASE),yUNIT)
+#   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+#endif
+#ifeq ($(NAME_BASE),koios)
+#   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+#endif
 ifeq ($(NAME_BASE),yLOG)
    LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
 endif
 ifeq ($(NAME_BASE),yURG)
    LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE) -lyLOG_debug
 endif
-LIB_NORM   := $(subst _debug,      ,$(LIB_DEBUG))
-LIB_UNIT   := $(LIB_DEBUG)   -lyUNIT -lyVAR_debug  $(LIB_MYUNIT)
+LIB_NORM    := $(subst _debug,      ,$(LIB_DEBUG))
+LIB_UNIT    := $(LIB_DEBUG)   -lyUNIT -lyVAR_debug  $(LIB_MYUNIT)
 #===(install variables)====================================#
-INST_OWNER := root
-INST_PERMS := 0755
-
-
+INST_OWNER  := root
+INST_PERMS  := 0755
 
 #===(code variables)=======================================#
-HEADERS    := $(sort $(wildcard $(NAME_BASE)*.h))
+HEADERS     := $(sort $(wildcard $(NAME_BASE)*.h))
 #---(sources)----------------#
-SRC_NORM   := $(patsubst %c,%c ,$(sort $(filter-out %_unit.c,$(wildcard $(NAME_BASE)*.c))))
-SRC_UTIL   := $(patsubst %,%.c ,$(NAME_UTIL))
+SRC_NORM    := $(patsubst %c,%c ,$(sort $(filter-out %_unit.c,$(wildcard $(NAME_BASE)*.c))))
+SRC_UTIL    := $(patsubst %,%.c ,$(NAME_UTIL))
 #---(remove utilities)-------------#
-SRC_NORM   := $(subst $(word 1,$(SRC_UTIL)),,$(SRC_NORM))
-SRC_NORM   := $(subst $(word 2,$(SRC_UTIL)),,$(SRC_NORM))
-SRC_NORM   := $(subst $(word 3,$(SRC_UTIL)),,$(SRC_NORM))
-SRC_NORM   := $(subst $(word 4,$(SRC_UTIL)),,$(SRC_NORM))
-SRC_NORM   := $(subst $(word 5,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 1,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 2,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 3,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 4,$(SRC_UTIL)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 5,$(SRC_UTIL)),,$(SRC_NORM))
 #---(objects)----------------#
-OBJ_DEBUG  := $(patsubst %c,%o ,$(SRC_NORM))
-OBJ_NORM   := $(patsubst %c,%os,$(SRC_NORM))
-OBJ_UTILD  := $(patsubst %c,%o ,$(SRC_UTIL))
-OBJ_UTIL   := $(patsubst %c,%os,$(SRC_UTIL))
+OBJ_DEBUG   := $(patsubst %c,%o ,$(SRC_NORM))
+OBJ_DNOMAIN := $(filter-out %_main.o,$(OBJ_DEBUG))
+OBJ_NORM    := $(patsubst %c,%os,$(SRC_NORM))
+OBJ_NNOMAIN := $(filter-out %_main.os,$(OBJ_NORM))
+OBJ_UTILD   := $(patsubst %c,%o ,$(SRC_UTIL))
+OBJ_UTIL    := $(patsubst %c,%os,$(SRC_UTIL))
 #---(simple spacing fix)-----------#
-SRC_NORM   := $(patsubst %os,%c ,$(OBJ_NORM))
-
-
+SRC_NORM    := $(patsubst %os,%c ,$(OBJ_NORM))
 
 #===(unit testing variables)===============================#
 #---(sources)----------------#
-TEMP       := $(sort $(wildcard $(NAME_BASE)_*.unit))
-SRC_UNIT   := $(patsubst %.unit,%.unit      ,$(TEMP))
+TEMP        := $(sort $(wildcard $(NAME_BASE)_*.unit))
+SRC_UNIT    := $(patsubst %.unit,%.unit      ,$(TEMP))
 #---(objects)----------------#
-OBJ_UNITD  := $(patsubst %.unit,%_unit.o    ,$(SRC_UNIT))
-OBJ_UNIT   := $(patsubst %.unit,%_unit.os   ,$(SRC_UNIT))
+OBJ_UNITD   := $(patsubst %.unit,%_unit.o    ,$(SRC_UNIT))
+OBJ_UNIT    := $(patsubst %.unit,%_unit.os   ,$(SRC_UNIT))
 #---(executables)------------#
-EXE_UNITD  := $(patsubst %.unit,%_unit_debug,$(SRC_UNIT))
-EXE_UNIT   := $(patsubst %.unit,%_unit      ,$(SRC_UNIT))
+EXE_UNITD   := $(patsubst %.unit,%_unit_debug,$(SRC_UNIT))
+EXE_UNIT    := $(patsubst %.unit,%_unit      ,$(SRC_UNIT))
 #---(editing values)---------#
-TEMP       := $(sort $(wildcard $(NAME_BASE)_[0-9a-z]*.unit))
-SRC_RUNIT  := $(patsubst %.unit,%.unit      ,$(TEMP))
-TEMP       := $(sort $(wildcard $(NAME_BASE)_[A-Z]*.unit))
-SRC_LUNIT  := $(patsubst %.unit,%.unit      ,$(TEMP))
-TEMP       := $(sort $(wildcard $(NAME_BASE)*.sunit))
-SRC_SUNIT  := $(patsubst %.sunit,%.sunit    ,$(TEMP))
+TEMP        := $(sort $(wildcard $(NAME_BASE)_[0-9a-z]*.unit))
+SRC_RUNIT   := $(patsubst %.unit,%.unit      ,$(TEMP))
+TEMP        := $(sort $(wildcard $(NAME_BASE)_[A-Z]*.unit))
+SRC_LUNIT   := $(patsubst %.unit,%.unit      ,$(TEMP))
+TEMP        := $(sort $(wildcard $(NAME_BASE)*.sunit))
+SRC_SUNIT   := $(patsubst %.sunit,%.sunit    ,$(TEMP))
 #---(munit files)------------#
-TEMP       := $(sort $(wildcard $(NAME_BASE)*.munit))
-SRC_MUNIT  := $(wildcard master.munit) $(wildcard master.sh) $(TEMP)
-OBJ_MUNIT  := $(patsubst %.munit,%_munit.o  ,$(TEMP))
-EXE_MUNIT  := $(patsubst %.munit,%_munit    ,$(TEMP))
-
+TEMP        := $(sort $(wildcard $(NAME_BASE)*.munit))
+SRC_MUNIT   := $(wildcard master.munit) $(wildcard master.sh) $(TEMP)
+OBJ_MUNIT   := $(patsubst %.munit,%_munit.o  ,$(TEMP))
+EXE_MUNIT   := $(patsubst %.munit,%_munit    ,$(TEMP))
 
 #===(support file variables)===============================#
-MANUALS    := $(sort $(wildcard $(NAME_BASE)*.[0123456789]))
-EDITLIST   := $(HEADERS) $(SRC_NORM) $(SRC_UTIL)
-
-
+MANUALS     := $(sort $(wildcard $(NAME_BASE)*.[0123456789]))
+EDITLIST    := $(HEADERS) $(SRC_NORM) $(SRC_UTIL)
 
 #===(housekeeping variables)===============================#
-COPY       := cp -f  
-MOVE       := mv -f  
-CLEAN      := rm -f
-PRINTF     := @printf
+COPY        := cp -f  
+MOVE        := mv -f  
+CLEAN       := rm -f
+PRINTF      := @printf
 ifeq ($(DEBUG_VER),y)
-STRIP      := @grep -a -v -e " DEBUG_" -e " yLOG_" 
+   STRIP      := @grep -a -v -e " DEBUG_" -e " yLOG_" 
 else
-STRIP      := cat
+   STRIP      := cat
 endif
 
 
 
-#===[[ MAIN RULE ]]========================================#
+##===[[ MAIN RULES ]]=========================================================##
+
 base               : CODE_BEG $(NAME_DEBUG) $(NAME_UTIL) CODE_END
 
 util               : $(NAME_UTIL)
 
-units              : UNIT_BEG master.h $(EXE_UNIT) $(EXE_MUNIT) UNIT_END
+units              : UNIT_BEG $(UNIT_OBJD) $(EXE_UNIT) $(EXE_MUNIT) UNIT_END
 
-#---(master unit)---------------------#
-master.h           : master.unit
-	koios --ecode master
-#	touch $(SRC_UNIT)
+vi_edit            :
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST) $(EDIT_TOO) $(UNIT_DEFS) $(UNIT_CODE)
+
+vi_man             :
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(MANUALS)
+
+vi_unit            :
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(UNIT_HEAD) $(SRC_RUNIT) $(SRC_LUNIT) $(SRC_SUNIT) $(SRC_MUNIT) $(UNIT_WIDE) $(UNIT_DATA)
+
+vars               :
+	$(PRINTF)   "\n";
+	$(PRINTF)   "VARIABLE CONFIRMATION\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "NAME_BASE  : å$(NAME_BASE)æ\n";
+	$(PRINTF)   "NAME_UTIL  : å$(NAME_UTIL)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "LIBRARY    : å$(LIBRARY)æ\n";
+	$(PRINTF)   "NAME_VER   : å$(NAME_VER)æ\n";
+	$(PRINTF)   "NAME_EXE   : å$(NAME_EXE)æ\n";
+	$(PRINTF)   "NAME_INT   : å$(NAME_INT)æ\n";
+	$(PRINTF)   "NAME_AR    : å$(NAME_AR)æ\n";
+	$(PRINTF)   "NAME_DEBUG : å$(NAME_DEBUG)æ\n";
+	$(PRINTF)   "NAME_DINT  : å$(NAME_DINT)æ\n";
+	$(PRINTF)   "NAME_DAR   : å$(NAME_DAR)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "COMPILE    : å$(COMPILE)æ\n";
+	$(PRINTF)   "COMPILE_EX : å$(COMPILE_EX)æ\n";
+	$(PRINTF)   "INC_MINE   : å$(INC_MINE)æ\n";
+	$(PRINTF)   "INC_DIR    : å$(INC_DIR)æ\n";
+	$(PRINTF)   "HEADERS    : å$(HEADERS)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_NORM   : å$(SRC_NORM)æ\n";
+	$(PRINTF)   "OBJ_DEBUG  : å$(OBJ_DEBUG)æ\n";
+	$(PRINTF)   "OBJ_NORM   : å$(OBJ_NORM)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_UNIT   : å$(SRC_UNIT)æ\n";
+	$(PRINTF)   "OBJ_UNITD  : å$(OBJ_UNITD)æ\n";
+	$(PRINTF)   "OBJ_UNIT   : å$(OBJ_UNIT)æ\n";
+	$(PRINTF)   "EXE_UNITD  : å$(EXE_UNITD)æ\n";
+	$(PRINTF)   "EXE_UNIT   : å$(EXE_UNIT)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_MUNIT  : å$(SRC_MUNIT)æ\n";
+	$(PRINTF)   "OBJ_MUNIT  : å$(OBJ_MUNIT)æ\n";
+	$(PRINTF)   "EXE_MUNIT  : å$(EXE_MUNIT)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "SRC_UTIL   : å$(SRC_UTIL)æ\n";
+	$(PRINTF)   "OBJ_UTIL   : å$(OBJ_UTIL)æ\n";
+	$(PRINTF)   "OBJ_UTILD  : å$(OBJ_UTILD)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "LINKER     : å$(LINKER)æ\n";
+	$(PRINTF)   "LIB_DIR    : å$(LIB_DIR)æ\n";
+	$(PRINTF)   "LIB_STD    : å$(LIB_STD)æ\n";
+	$(PRINTF)   "LIB_MINE   : å$(LIB_MINE)æ\n";
+	$(PRINTF)   "LIB_MYUNIT : å$(LIB_MYUNIT)æ\n";
+	$(PRINTF)   "LIB_UTIL   : å$(LIB_UTIL)\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "LIB_NORM   : å$(LIB_NORM)æ\n";
+	$(PRINTF)   "LIB_DEBUG  : å$(LIB_DEBUG)æ\n";
+	$(PRINTF)   "LIB_UNIT   : å$(LIB_UNIT)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "INST_DIR   : å$(INST_DIR)æ\n";
+	$(PRINTF)   "INST_OWNER : å$(INST_OWNER)æ\n";
+	$(PRINTF)   "INST_PERMS : å$(INST_PERMS)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "MANUALS    : å$(MANUALS)æ\n";
+	$(PRINTF)   "EDITLIST   : å$(EDITLIST)æ\n";
+	$(PRINTF)   "\n";
+	$(PRINTF)   "UNIT_HEAD  : å$(UNIT_HEAD)æ\n";
+	$(PRINTF)   "UNIT_HEADH : å$(UNIT_HEADH)æ\n";
+	$(PRINTF)   "UNIT_WIDE  : å$(UNIT_WIDE)æ\n";
+	$(PRINTF)   "UNIT_DATA  : å$(UNIT_DATA)æ\n";
+	$(PRINTF)   "UNIT_DEFS  : å$(UNIT_DEFS)æ\n";
+	$(PRINTF)   "UNIT_CODE  : å$(UNIT_CODE)æ\n";
+	$(PRINTF)   "UNIT_SRC   : å$(UNIT_SRC)æ\n";
+	$(PRINTF)   "UNIT_OBJC  : å$(UNIT_OBJC)æ\n";
+	$(PRINTF)   "UNIT_OBJD  : å$(UNIT_OBJD)æ\n";
+	$(PRINTF)   "UNIT_OBJ   : å$(UNIT_OBJ)æ\n";
 
 
 
-##===[[ PRODUCTION CODE ]]====================================================##
+##===[[ COMPILING SOURCE ]]===================================================##
 
+#---(main sources)--------------------#
+$(OBJ_DEBUG)      : %.o : %.c $(HEADERS)
+	@printf "#´´´((norm-start))´´´´´´´´´´´´´´´> $@                               \n"
+	$(COMPILE) $(COMPILE_EX)   $<                          $(INC_DIR)
+	@printf "#´´´((norm-stripped))´´´´´´´´´´´´> $@                               \n"
+	$(STRIP)                   $<        >  $<s
+	$(COMPILE) $(COMPILE_EX)   $<s      -o  $@s            $(INC_DIR)
+	@printf "#´´´((norm-complete))´´´´´´´´´´´´> $@                               \n"
+
+#---(unit_head.h)---------------------#
+unit_head.h       : unit_head.unit
+	@printf "#´´´((unit-head-start))´´´´´´´´´´> $@                               \n"
+	koios --code   unit_head
+	@printf "#´´´((unit-head-complete))´´´´´´´> $@                               \n"
+
+#---(unit_code)-----------------------#
+$(UNIT_OBJC)      : $(HEADERS) unit_code.c unit_code.h
+	@printf "#´´´((unit-code-start))´´´´´´´´´´> $@                               \n"
+	$(COMPILE)     unit_code.c      -o unit_code.o          $(INC_DIR)
+	@printf "#´´´((unit-code-stripped))´´´´´´´> $@                               \n"
+	$(STRIP)       unit_code.c  >   unit_code.cs
+	$(COMPILE)     unit_code.cs     -o unit_code.os         $(INC_DIR)
+	@printf "#´´´((unit-code-complete))´´´´´´´> $@                               \n"
+
+#---(unit wide/data)------------------#
+$(UNIT_OBJD)      : %.o : %.unit $(HEADERS) unit_head.h
+	@printf "#´´´((unit-libs-start))´´´´´´´´´´> $@                               \n"
+	koios --code   $(patsubst %.unit,%,$<)
+	$(COMPILE)     $(patsubst %.unit,%,$<).cs  -o $@s  $(INC_DIR)
+	ln --symbolic --force  $@s        $@
+	@printf "#´´´((unit-libs-complete))´´´´´´´> $@                               \n"
+
+#---(unit tests)----------------------#
+$(OBJ_UNITD)      : %_unit.o : %.unit $(HEADERS)
+	@printf "#´´´((unit-full-start))´´´´´´´´´´> $@                               \n"
+	koios --debug  $(patsubst %.unit,%,$<)
+	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.c           $(INC_DIR)
+	@printf "#´´´((unit-full-stripped))´´´´´´´> $@                               \n"
+	koios --code   $(patsubst %.unit,%,$<)
+	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.cs  -o $@s  $(INC_DIR)
+	@printf "#´´´((unit-full-complete))´´´´´´´> $@                               \n"
+
+#---(munit tests)---------------------#
+$(OBJ_MUNIT)      : %_munit.o : %.munit $(HEADERS)
+	@printf "#´´´((munit-start))´´´´´´´´´´´´´´> $@                               \n"
+	$(CLEAN)       $(patsubst %.munit,%,$<).wave
+	$(COMPILE)     $(patsubst %.munit,%,$<).munit   -o $(patsubst %.munit,%,$<)_munit.o         $(INC_DIR)
+	@printf "#´´´((munit-complete)´´´´´´´´´´´´> $@                               \n"
+
+#---(utility objects)-----------------#
+$(OBJ_UTILD)      : %.o : %.c $(HEADERS)
+	@printf "#´´´((util-start))´´´´´´´´´´´´´´´> $@                               \n"
+	$(COMPILE)     $<                          $(INC_DIR)
+	@printf "#´´´((util-stripped))´´´´´´´´´´´´> $@                               \n"
+	$(STRIP)       $<        >  $<s
+	$(COMPILE)     $<s      -o  $@s            $(INC_DIR)
+	@printf "#´´´((util-complete))´´´´´´´´´´´´> $@                               \n"
+
+
+
+##===[[ LINKING OBJECTS ]]====================================================##
+
+#---(main objects)--------------------#
 CODE_BEG          :
 	@printf "\n##===[[ COMP_BEGIN ]]=============================================================================##\n\n"
 
@@ -163,9 +316,27 @@ endif
 CODE_END          :
 	@printf "\n##===[[ COMP_END ]]===============================================================================##\n\n"
 
+#---(unit tests)----------------------#
+UNIT_BEG          :
+	@printf "\n##===[[ UNIT_BEGIN ]]=============================================================================##\n\n"
 
+$(EXE_UNIT)       : %_unit : %_unit.o $(HEADERS) $(OBJ_DNOMAIN) $(UNIT_OBJD) $(UNIT_OBJC)
+	@printf "#´´´((unit-debug))´´´´´´´´´´´´´´´> $@                              \n"
+	$(LINKER) -o $@_debug    $<   $(OBJ_DNOMAIN) $(UNIT_OBJD) $(UNIT_OBJC)  $(LIB_UNIT);
+	@printf "#´´´((unit-prod))´´´´´´´´´´´´´´´´> $@                              \n"
+	$(LINKER) -o $@          $<   $(OBJ_NNOMAIN) $(UNIT_OBJ)  $(UNIT_OBJC)  $(LIB_UNIT);
+	@printf "#´´´((unit-complete))´´´´´´´´´´´´> $@                              \n"
 
-#---(utility versions)----------------#
+$(EXE_MUNIT)      : %_munit : %_munit.o $(HEADERS) $(OBJ_DNOMAIN)
+	@printf "#´´´((munit-prod))´´´´´´´´´´´´´´´> $@                              \n"
+	$(LINKER) -o $@          $<   $(OBJ_NNOMAIN)   $(LIB_DEBUG) $(LIB_MYUNIT);
+	./$@ --inst  > /dev/null
+	@printf "#´´´((munit-complete))´´´´´´´´´´´> $@                              \n"
+
+UNIT_END          :
+	@printf "\n##===[[ UNIT_END ]]===============================================================================##\n\n"
+
+#---(utilities)-----------------------#
 $(NAME_UTIL)       : % : %.o $(OBJ_DEBUG)
 	@printf "#´´´((util-debug))´´´´´´´´´´´´´´´> $@                              \n"
 	$(LINKER)  -o $@_debug    $(OBJ_DEBUG)  $@.o          $(LIB_DEBUG)  $(LIB_UTIL)
@@ -175,161 +346,7 @@ $(NAME_UTIL)       : % : %.o $(OBJ_DEBUG)
 
 
 
-##===[[ UNIT TESTING ]]=======================================================##
-
-UNIT_BEG          :
-	@printf "\n##===[[ UNIT_BEGIN ]]=============================================================================##\n\n"
-
-$(EXE_UNIT)        : %_unit : %_unit.o $(HEADERS) $(OBJ_DEBUG)
-	@printf "#´´´((unit-debug))´´´´´´´´´´´´´´´> $@                              \n"
-	$(LINKER) -o $@_debug    $<   $(filter-out %_main.o,$(OBJ_DEBUG))   $(LIB_UNIT);
-	@printf "#´´´((unit-prod))´´´´´´´´´´´´´´´´> $@                              \n"
-	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_UNIT);
-	@printf "#´´´((unit-complete))´´´´´´´´´´´´> $@                              \n"
-
-$(EXE_MUNIT)       : %_munit : %_munit.o $(HEADERS) $(OBJ_DEBUG)
-	@printf "#´´´((munit-prod))´´´´´´´´´´´´´´´> $@                              \n"
-	$(LINKER) -o $@          $<   $(filter-out %_main.os,$(OBJ_NORM))   $(LIB_DEBUG) $(LIB_MYUNIT);
-	./$@ --inst  > /dev/null
-	@printf "#´´´((munit-complete))´´´´´´´´´´´> $@                              \n"
-
-UNIT_END          :
-	@printf "\n##===[[ UNIT_END ]]===============================================================================##\n\n"
-
-
-
-#$(EXE_UNITD)        : %_unit : %.unit $(OBJ_NORM) $(SRC_UNIT)
-#	@printf "unit test %s %s %d\n" "$<" "$@" "$${#$@}";
-#	@declare  UNIT_ENTRY=$@; \
-#	 declare  UNIT_BASE=$${UNIT_ENTRY: 0: -5}; \
-#    printf "unit_base  : %s\n" "$${UNIT_BASE}"; \
-#    printf "unit_entry : %s\n" "$${UNIT_ENTRY}"; \
-#	 koios $${UNIT_BASE}; \
-#    $(COMPILE) $${UNIT_ENTRY}.c; \
-#	 $(LINKER) -o $${UNIT_ENTRY} $${UNIT_ENTRY}.o $(OBJ_UNIT) $(LIB_UNIT);
-#	@declare  UNIT_ENTRY=$@; \
-#	 declare  UNIT_BASE=$${UNIT_ENTRY: 0: -5}; \
-#    printf "unit_base  : %s\n" "$${UNIT_BASE}"; \
-#    printf "unit_entry : %s\n" "$${UNIT_ENTRY}"; \
-#	 koios --debug $${UNIT_BASE}; \
-#    $(COMPILE) $${UNIT_ENTRY}.c; \
-#	 $(LINKER) -o $${UNIT_ENTRY}_debug $${UNIT_ENTRY}.o $(OBJ_UNITD) $(LIB_UNIT);
-
-
-#´´´((norm··start))´´´´´´´´´´´´´´´> %-30.30s to %-30.30s\n" "$<" "$@"
-
-#===[[ OBJECT FILES ]]=====================================#
-# library files need -fPIC which will be in COMPILE_EX (if a lib) or blank if normal
-
-#---(main objects)--------------------#
-$(OBJ_DEBUG)       : %.o : %.c $(HEADERS)
-	@printf "#´´´((norm-start))´´´´´´´´´´´´´´´> $<                               \n"
-	$(COMPILE) $(COMPILE_EX)   $<                          $(INC_DIR)
-	@printf "#´´´((norm-stripped))´´´´´´´´´´´´> $<                               \n"
-	$(STRIP)                   $<        >  $<s
-	$(COMPILE) $(COMPILE_EX)   $<s      -o  $@s            $(INC_DIR)
-	@printf "#´´´((norm-complete))´´´´´´´´´´´´> $<                               \n"
-
-#---(main objects)--NEW-NEW-NEW-------#
-$(OBJ_UNITD)       : %_unit.o : %.unit $(HEADERS)
-	@printf "#´´´((unit-start))´´´´´´´´´´´´´´´> $<                               \n"
-	koios --edebug $(patsubst %.unit,%,$<)
-	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.c           $(INC_DIR)
-	@printf "#´´´((unit-stripped))´´´´´´´´´´´´> $<                               \n"
-	koios --ecode  $(patsubst %.unit,%,$<)
-	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.cs  -o $@s  $(INC_DIR)
-	@printf "#´´´((unit-midpoint))´´´´´´´´´´´´> $<                               \n"
-
-$(OBJ_MUNIT)       : %_munit.o : %.munit $(HEADERS)
-	@printf "#´´´((munit-start))´´´´´´´´´´´´´´> $<                               \n"
-	$(CLEAN)       $(patsubst %.munit,%,$<).wave
-	$(COMPILE)     $(patsubst %.munit,%,$<).munit   -o $(patsubst %.munit,%,$<)_munit.o         $(INC_DIR)
-	@printf "#´´´((munit-complete)´´´´´´´´´´´´> $<                               \n"
-
-#---(utility objects)-----------------#
-$(OBJ_UTILD)       : %.o : %.c $(HEADERS)
-	@printf "#´´´((util-start))´´´´´´´´´´´´´´´> $<                               \n"
-	$(COMPILE)                 $<                          $(INC_DIR)
-	@printf "#´´´((util-stripped))´´´´´´´´´´´´> $<                               \n"
-	$(STRIP)                   $<        >  $<s
-	$(COMPILE)                 $<s      -o  $@s            $(INC_DIR)
-	@printf "#´´´((util-complete))´´´´´´´´´´´´> $<                               \n"
-
-
-
 #===[[ HOUSEKEEPING ]]=====================================#
-
-show_vars          :
-	$(PRINTF)   "\n";
-	$(PRINTF)   "VARIABLE CONFIRMATION\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "NAME_BASE  : $(NAME_BASE)\n";
-	$(PRINTF)   "NAME_UTIL  : $(NAME_UTIL)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "LIBRARY    : $(LIBRARY)\n";
-	$(PRINTF)   "NAME_VER   : $(NAME_VER)\n";
-	$(PRINTF)   "NAME_EXE   : $(NAME_EXE)\n";
-	$(PRINTF)   "NAME_INT   : $(NAME_INT)\n";
-	$(PRINTF)   "NAME_AR    : $(NAME_AR)\n";
-	$(PRINTF)   "NAME_DEBUG : $(NAME_DEBUG)\n";
-	$(PRINTF)   "NAME_DINT  : $(NAME_DINT)\n";
-	$(PRINTF)   "NAME_DAR   : $(NAME_DAR)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "COMPILE    : $(COMPILE)\n";
-	$(PRINTF)   "COMPILE_EX : $(COMPILE_EX)\n";
-	$(PRINTF)   "INC_MINE   : $(INC_MINE)\n";
-	$(PRINTF)   "INC_DIR    : $(INC_DIR)\n";
-	$(PRINTF)   "HEADERS    : $(HEADERS)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "SRC_NORM   : $(SRC_NORM)\n";
-	$(PRINTF)   "OBJ_DEBUG  : $(OBJ_DEBUG)\n";
-	$(PRINTF)   "OBJ_NORM   : $(OBJ_NORM)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "SRC_UNIT   : $(SRC_UNIT)\n";
-	$(PRINTF)   "OBJ_UNITD  : $(OBJ_UNITD)\n";
-	$(PRINTF)   "OBJ_UNIT   : $(OBJ_UNIT)\n";
-	$(PRINTF)   "EXE_UNITD  : $(EXE_UNITD)\n";
-	$(PRINTF)   "EXE_UNIT   : $(EXE_UNIT)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "SRC_MUNIT  : $(SRC_MUNIT)\n";
-	$(PRINTF)   "OBJ_MUNIT  : $(OBJ_MUNIT)\n";
-	$(PRINTF)   "EXE_MUNIT  : $(EXE_MUNIT)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "SRC_UTIL   : $(SRC_UTIL)\n";
-	$(PRINTF)   "OBJ_UTIL   : $(OBJ_UTIL)\n";
-	$(PRINTF)   "OBJ_UTILD  : $(OBJ_UTILD)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "LINKER     : $(LINKER)\n";
-	$(PRINTF)   "LIB_DIR    : $(LIB_DIR)\n";
-	$(PRINTF)   "LIB_STD    : $(LIB_STD)\n";
-	$(PRINTF)   "LIB_MINE   : $(LIB_MINE)\n";
-	$(PRINTF)   "LIB_MYUNIT : $(LIB_MYUNIT)\n";
-	$(PRINTF)   "LIB_UTIL   : $(LIB_UTIL)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "LIB_NORM   : $(LIB_NORM)\n";
-	$(PRINTF)   "LIB_DEBUG  : $(LIB_DEBUG)\n";
-	$(PRINTF)   "LIB_UNIT   : $(LIB_UNIT)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "INST_DIR   : $(INST_DIR)\n";
-	$(PRINTF)   "INST_OWNER : $(INST_OWNER)\n";
-	$(PRINTF)   "INST_PERMS : $(INST_PERMS)\n";
-	$(PRINTF)   "\n";
-	$(PRINTF)   "MANUALS    : $(MANUALS)\n";
-	$(PRINTF)   "EDITLIST   : $(EDITLIST)\n";
-	$(PRINTF)   "\n";
-
-
-vi_edit            :
-#	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST)
-	vi -c "call HBUF_on()" -c "call HTAG_on()" $(EDITLIST) $(EDIT_TOO)
-
-vi_man             :
-#	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" $(MANUALS)
-	vi -c "call HBUF_on()" -c "call HTAG_on()" $(MANUALS)
-
-vi_unit            :
-#	theia 0c; vi -c "call HBUF_on()" -c "call HTAG_on()" master.unit $(SRC_UNIT)
-	vi -c "call HBUF_on()" -c "call HTAG_on()" master.unit $(SRC_RUNIT) $(SRC_LUNIT) $(SRC_SUNIT) $(SRC_MUNIT) master.c
 
 allunits           :
 	for ENTRY in $$(ls --color=never -1 *_unit); do printf "$${ENTRY}\n"; ./$${ENTRY} --scrp; true; done
@@ -380,6 +397,14 @@ unit_clean         :
 	$(CLEAN)    $(NAME_BASE)*_munit
 	$(CLEAN)    $(NAME_BASE)*_munit.o
 	$(CLEAN)    $(NAME_BASE)*_unit_debug
+	$(CLEAN)    unit_head.h
+	$(CLEAN)    unit_wide.h
+	$(CLEAN)    unit_wide.cs
+	$(CLEAN)    unit_data.h
+	$(CLEAN)    unit_data.cs
+	$(CLEAN)    unit*.o
+	$(CLEAN)    unit*.os
+	$(CLEAN)    unit.globals
 
 small_clean        :
 	#---(object and stripped files)-------#
@@ -388,14 +413,6 @@ small_clean        :
 	$(CLEAN)    $(NAME_BASE)*.os
 	$(CLEAN)    $(NAME_BASE)*.Sc
 	$(CLEAN)    $(NAME_BASE)*.So
-	#---(created unit code)---------------#
-	$(CLEAN)    master.h
-	$(CLEAN)    master.urun
-	$(CLEAN)    $(NAME_BASE)*_unit.code
-	$(CLEAN)    $(NAME_BASE)*_unit.c
-	$(CLEAN)    $(NAME_BASE)*.urun
-	$(CLEAN)    $(NAME_BASE)*.tmp
-	$(CLEAN)    $(NAME_BASE)*.unit.old
 	#---(HFIX stuff)----------------------#
 	$(CLEAN)    HFIX.log
 	$(CLEAN)    HFIX.out

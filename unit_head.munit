@@ -1,0 +1,696 @@
+#include    <stdio.h>        /* C_ANSI : strcpy, strlen, strchr, strcmp, ...  */
+#include    <string.h>       /* C_ANSI : printf, snprintf, fgets, fopen, ...  */
+#include    <stdarg.h>       /* C_ANSI : variable argument handling           */
+#include    <stdlib.h>       /* C_ANSI : system                               */
+#include    <unistd.h>       /* stat(),crpyt()                                */
+
+#include    <yENV_solo.h>
+#include    <yLOG_solo.h>
+
+#include    <yENV_uver.h>
+#include    <yLOG_uver.h>
+
+#include    <yUNIT_solo.h>
+
+#include    <yUNIT.h>
+
+
+
+/*===[[ COMMON ]]=============================================================*/
+static char   sm_cwd     [LEN_FULL]  = "";
+static char  *sm_polymnia            = "/tmp/polymnia.code_analysis_queen/";
+static char  *sm_makefile            = "Makefile";
+static char  *sm_output              = "temp.txt";
+
+static char  *sm_uhead               = "unit_head.unit";
+static char  *sm_hhead               = "unit_head.h";
+
+static char  *sm_uwide               = "unit_wide.unit";
+static char  *sm_owide               = "unit_wide.o";
+
+static char  *sm_udata               = "unit_data.unit";
+static char  *sm_odata               = "unit_data.o";
+
+static char  *sm_hcode               = "unit_code.h";
+static char  *sm_ccode               = "unit_code.c";
+static char  *sm_ocode               = "unit_code.o";
+
+static char  *sm_oprojs              = "polymnia_projs.o";
+static char  *sm_ofiles              = "polymnia_files.o";
+static char  *sm_ofuncs              = "polymnia_funcs.o";
+
+static char  *sm_oprojs_unit         = "polymnia_projs_unit.o";
+static char  *sm_ofiles_unit         = "polymnia_files_unit.o";
+static char  *sm_ofuncs_unit         = "polymnia_funcs_unit.o";
+
+char
+MUNIT__scrp_start       (void)
+{
+   char        t           [LEN_FULL]  = "";
+
+   yUNIT_mincond  ("prepare clean start (save dir, create and move to test version of polymnia)");
+   sprintf (t, "rm -rf %s    > /dev/null  2>&1", sm_polymnia);
+   yUNIT_minstr   ("make command to wipe test dir"      , t                               ,  "¬");
+   yUNIT_minval   ("wipe test directory (JIC)"          , system  (t)                     ,    0);
+   sprintf (t, "mkdir %s    > /dev/null  2>&1", sm_polymnia);
+   yUNIT_minstr   ("make command to create directory"   , t                               ,  "¬");
+   yUNIT_minval   ("create polymnia test directory"     , system  (t)                     ,    0);
+   yUNIT_minstr   ("capture home directory"             , getcwd  (sm_cwd, LEN_FULL)      ,  "¬");
+   yUNIT_minval   ("move to /tmp testing area"          , chdir   (sm_polymnia)           ,    0);
+   yUNIT_minstr   ("operating in directory"             , getcwd  (t     , LEN_FULL)      ,  "¬");
+   yUNIT_mindnoc  ();
+
+   return 0;
+}
+
+char
+MUNIT__scrp_finish      (void)
+{
+   char        t           [LEN_FULL]  = "";
+
+   yUNIT_mincond  ("prepare clean end");
+   yUNIT_minval   ("move back to home directory"        , chdir   (sm_cwd) ,    0);
+   yUNIT_minstr   ("confirm home directory"             , getcwd  (t     , LEN_FULL)      ,  "¬");
+   sprintf (t, "rm -rf %s    > /dev/null  2>&1", sm_polymnia);
+   yUNIT_minstr   ("make command to wipe test dir"      , t                               ,  "¬");
+   yUNIT_minval   ("wipe test directory"                , system  (t)                     ,    0);
+   yUNIT_mindnoc  ();
+
+   return 0;
+}
+
+char
+MUNIT__append           (char a_dir, char a_file [LEN_FULL], char a_recd [LEN_RECD])
+{
+   char        x_cmd       [LEN_RECD]  = "";
+   static int  c           =    0;
+   /*---(clear for first/rm)-------------*/
+   if (a_dir == '[' || a_dir == '#') {
+      c = 0;
+      sprintf (x_cmd, "rm -f  %s  2> /dev/null", a_file);
+      system (x_cmd);
+   }
+   if (a_dir == '#')  return 0;
+   /*---(add record)---------------------*/
+   strlcpy (x_cmd, "echo \"", LEN_RECD);
+   strlcat (x_cmd, a_recd, LEN_RECD);
+   if (a_dir == '[')  strlcat (x_cmd, "\"  >  ", LEN_RECD);
+   else               strlcat (x_cmd, "\"  >> ", LEN_RECD);
+   strlcat (x_cmd, a_file, LEN_RECD);
+   ++c;
+   system (x_cmd);
+   yUNIT_minstr   ("append item to file"                , x_cmd                           ,  "¬");
+   /*---(complete)-----------------------*/
+   return 1;
+}
+
+char
+MUNIT__create_makefile  (void)
+{
+   yUNIT_mincond ("prepare a sample, non-library Makefile");
+   MUNIT__append  ('[', sm_makefile, "#================================[[ beg-code ]]================================#");
+   MUNIT__append  ('>', sm_makefile, "");
+   MUNIT__append  ('>', sm_makefile, " #===(manditory)============================================#");
+   MUNIT__append  ('>', sm_makefile, " NAME_BASE  = polymnia");
+   MUNIT__append  ('>', sm_makefile, " LIB_STD    = -lm");
+   MUNIT__append  ('>', sm_makefile, " LIB_MINE   = -lySTR_debug");
+   MUNIT__append  ('>', sm_makefile, " INST_DIR   = /usr/local/bin");
+   MUNIT__append  ('>', sm_makefile, "");
+   MUNIT__append  ('>', sm_makefile, " #===(master template)======================================#");
+   MUNIT__append  ('>', sm_makefile, " include /usr/local/sbin/zeno_make");
+   MUNIT__append  ('>', sm_makefile, "");
+   MUNIT__append  ('>', sm_makefile, " #================================[[ end-code ]]================================#");
+   yUNIT_minval   ("check line count"     , yenv_ulines  (sm_makefile),   12);
+   yUNIT_mindnoc  ();
+
+   return 1;
+}
+
+char
+MUNIT__create_uhead     (char a_create, char a_file [LEN_TITLE])
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond ("prepare a sample, unit-testing unit_head file");
+      MUNIT__append  ('[', a_file, "PREP          include the prototype headers                                      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   - - - - -   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "   incl       include public header                polymnia.h                  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   - - - - -   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "   incl       include yENV header                  yCOLOR_solo.h               - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   - - - - -   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "");
+      MUNIT__append  ('>', a_file, "GLOBAL   -H-  placeholder in the uniit head                     0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"zeroth\\\"       z_equal  0                      ");
+      yUNIT_minval   ("check line count"     , yenv_ulines  (a_file),    7);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making unit_head");
+      sprintf (t, "make %s > %s  2>&1", sm_hhead, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_mincond  ("verify make output");
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    3);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-head-start))´´´´´´´´´´> unit_head.h ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   unit_head");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-head-complete))´´´´´´´> unit_head.h ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.unit")  ,  'r');
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_head.h")     ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_uwide     (char a_create, char a_file [LEN_TITLE])
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond ("prepare a sample, unit-testing unit_wide file");
+      MUNIT__append  ('[', a_file, "GLOBAL   -A-  set up multi-project, multi-file dataset          0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"first\\\"        z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -L-  set up testing directories                        0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"second\\\"       z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -M-  setup sample project one                          0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"third\\\"        z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -N-  setup sample project two                          0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"fourth\\\"       z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -O-  setup sample project three                        0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"fifth\\\"        z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -P-  shut down testing                                 0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"sixth\\\"        z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -Y-  set up testing (home) directory                   0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"seventh\\\"      z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -Z-  remove testing (home) directory                   0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"eighth\\\"       z_equal  0                      ");
+      yUNIT_minval   ("check line count"     , yenv_ulines  (a_file),   24);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making unit_wide.o");
+      sprintf (t, "make %s > %s  2>&1", sm_owide, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-libs-start))´´´´´´´´´´> unit_wide.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   unit_wide");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "ln --symbolic ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-libs-complete))´´´´´´´> unit_wide.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_wide.os")    ,  'r');
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_wide.o")     ,  's');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_udata      (char a_create, char a_file [LEN_TITLE])
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond ("prepare a sample, unit-testing unit_data file");
+      MUNIT__append  ('[', a_file, "CONFIG   -ò-  set up details for sample yLOG                    0s  yLOG           - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"ninth\\\"        z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -÷-  set up details for sample polymnia                0s  polymnia       - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"tenth\\\"        z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ê-  set up details for sample gyges                   0s  gyges          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"eleventh\\\"     z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -è-  set up details for sample arachne                 0s  arachne        - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"twelfth\\\"      z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ñ-  set up details for sample khronos                 0s  khronos        - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"thirteenth\\\"   z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ó-  set up details for sample metis                   0s  metis          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"fourteenth\\\"   z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -é-  set up details for sample yjobs                   0s  yjobs          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"fifteenth\\\"    z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ù-  set up details for sample ystr                    0s  ystr           - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"sixteenth\\\"    z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ý-  set up details for sample ycalc                   0s  ycalc          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"seventeenth\\\"  z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ú-  set up details for sample little project          0s  little         - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"eighteenth\\\"   z_equal  0                      ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ÿ-  removing all sample projects                      0s  remove         - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
+      MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"nineteenth\\\"   z_equal  0                      ");
+      yUNIT_minval   ("check line count"     , yenv_ulines  (a_file),   33);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making unit_data.o");
+      sprintf (t, "make %s > %s  2>&1", sm_odata, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-libs-start))´´´´´´´´´´> unit_data.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   unit_data");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "ln --symbolic ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-libs-complete))´´´´´´´> unit_data.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_data.os")    ,  'r');
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_data.o")     ,  's');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_ucode      (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond ("prepare a unit_code.h");
+      MUNIT__append  ('[', "unit_code.h"     , "char   UNIT__quiet  (void);");
+      MUNIT__append  ('>', "unit_code.h"     , "char   UNIT__end    (void);");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("unit_code.h"     ),    2);
+      yUNIT_mindnoc  ();
+
+      yUNIT_mincond ("prepare a unit_code.c");
+      MUNIT__append  ('[', "unit_code.c"     , "#include    \\\"polymnia.h\\\"");
+      MUNIT__append  ('>', "unit_code.c"     , "#include    \\\"unit_code.h\\\"");
+      MUNIT__append  ('>', "unit_code.c"     , "");
+      MUNIT__append  ('>', "unit_code.c"     , "char");
+      MUNIT__append  ('>', "unit_code.c"     , "UNIT__quiet  (void)");
+      MUNIT__append  ('>', "unit_code.c"     , "{");
+      MUNIT__append  ('>', "unit_code.c"     , "   printf (\\\"%-20.20s  %-20.20s  åSTARTINGæ\\n\\\", __FILE__, __FUNCTION__);");
+      MUNIT__append  ('>', "unit_code.c"     , "}");
+      MUNIT__append  ('>', "unit_code.c"     , "");
+      MUNIT__append  ('>', "unit_code.c"     , "char");
+      MUNIT__append  ('>', "unit_code.c"     , "UNIT__end    (void)");
+      MUNIT__append  ('>', "unit_code.c"     , "{");
+      MUNIT__append  ('>', "unit_code.c"     , "   printf (\\\"%-20.20s  %-20.20s  åENDINGæ\\n\\\", __FILE__, __FUNCTION__);");
+      MUNIT__append  ('>', "unit_code.c"     , "}");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("unit_code.c"     ),   14);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making unit_code.o");
+      sprintf (t, "make %s > %s  2>&1", sm_ocode, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-code-start))´´´´´´´´´´> unit_code.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-code-stripped))´´´´´´´> unit_code.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-code-complete))´´´´´´´> unit_code.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_code.os")    ,  'r');
+      yUNIT_minchr   ("check for result"                   , yenv_uexists ("unit_code.o")     ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_header    ()
+{
+   yUNIT_mincond ("prepare a sample polymnia.h file");
+   MUNIT__append  ('[', "polymnia.h"      , "#ifndef POLYMNIA");
+   MUNIT__append  ('>', "polymnia.h"      , "#define POLYMNIA yes");
+   MUNIT__append  ('>', "polymnia.h"      , "");
+   MUNIT__append  ('>', "polymnia.h"      , "#include    <stdio.h>        /* CLIBC   standard input/output                 */");
+   MUNIT__append  ('>', "polymnia.h"      , "#include    <stdlib.h>       /* CLIBC   standard general purpose              */");
+   MUNIT__append  ('>', "polymnia.h"      , "#include    <string.h>       /* CLIBC   standard string handling              */");
+   MUNIT__append  ('>', "polymnia.h"      , "");
+   MUNIT__append  ('>', "polymnia.h"      , "char   PROJS_single (char *a_str);");
+   MUNIT__append  ('>', "polymnia.h"      , "char   FILES_single (char *a_str);");
+   MUNIT__append  ('>', "polymnia.h"      , "char   FUNCS_single (char *a_str);");
+   MUNIT__append  ('>', "polymnia.h"      , "");
+   MUNIT__append  ('>', "polymnia.h"      , "#endif");
+   yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia.h"      ),   12);
+   yUNIT_mindnoc  ();
+
+   return 1;
+}
+
+char
+MUNIT__create_projs     (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond  ("prepare PROJECTS source code file for program sample code ");
+      MUNIT__append  ('[', "polymnia_projs.c", "#include    \\\"polymnia.h\\\"");
+      MUNIT__append  ('>', "polymnia_projs.c", "");
+      MUNIT__append  ('>', "polymnia_projs.c", "char");
+      MUNIT__append  ('>', "polymnia_projs.c", "PROJS_single (char *a_str)");
+      MUNIT__append  ('>', "polymnia_projs.c", "{");
+      MUNIT__append  ('>', "polymnia_projs.c", "   printf (\\\"%-20.20s  %-20.20s  å%sæ\\n\\\", __FILE__, __FUNCTION__, a_str);");
+      MUNIT__append  ('>', "polymnia_projs.c", "}");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia_projs.c"),    7);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_projs.o");
+      sprintf (t, "make %s > %s  2>&1", sm_oprojs, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((norm-start))´´´´´´´´´´´´´´´> polymnia_projs.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-stripped))´´´´´´´´´´´´> polymnia_projs.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-complete))´´´´´´´´´´´´> polymnia_projs.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_oprojs)         ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_uprojs    (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond  ("prepare PROJECTS unit test file for program sample code ");
+      MUNIT__append  ('[', "polymnia_projs.unit", "SCRP  [0a/·]  (PROJS) little script to test projects           1s   little          PROJS_single     - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "   COND       verify program setup                             - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "     exec     setup the program              UNIT__quiet                                               z_equal  0          ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "   REUSE -H-  ===[[ from unit_head ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "   REUSE -L-  ===[[ from unit_wide ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "   COND       verify program function                          - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "     exec     call single                    PROJS_single    \\\"alpha\\\"                             z_equal  0          ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "   REUSE -ê-  ===[[ from unit_data ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "   COND       verify program teardown                          - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_projs.unit", "     exec     shutdown the program           UNIT__end                                                 z_equal  0          ");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia_projs.unit"),   10);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_projs_unit.o");
+      sprintf (t, "make %s > %s  2>&1", sm_oprojs_unit, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    7);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-full-start))´´´´´´´´´´> polymnia_projs_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --debug  polymnia_projs");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-stripped))´´´´´´´> polymnia_projs_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   polymnia_projs");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-complete))´´´´´´´> polymnia_projs_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_oprojs_unit)    ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'C' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_projs_unit");
+      sprintf (t, "make polymnia_projs_unit > %s  2>&1", sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-debug))´´´´´´´´´´´´´´´> polymnia_projs_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-prod))´´´´´´´´´´´´´´´´> polymnia_projs_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-complete))´´´´´´´´´´´´> polymnia_projs_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_oprojs_unit)    ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_files     (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond  ("prepare FILES source code file for program sample code ");
+      MUNIT__append  ('[', "polymnia_files.c", "#include    \\\"polymnia.h\\\"");
+      MUNIT__append  ('>', "polymnia_files.c", "");
+      MUNIT__append  ('>', "polymnia_files.c", "char");
+      MUNIT__append  ('>', "polymnia_files.c", "FILES_single (char *a_str)");
+      MUNIT__append  ('>', "polymnia_files.c", "{");
+      MUNIT__append  ('>', "polymnia_files.c", "   printf (\\\"%-20.20s  %-20.20s  å%sæ\\n\\\", __FILE__, __FUNCTION__, a_str);");
+      MUNIT__append  ('>', "polymnia_files.c", "}");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia_files.c"),    7);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_files.o");
+      sprintf (t, "make %s > %s  2>&1", sm_ofiles, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((norm-start))´´´´´´´´´´´´´´´> polymnia_files.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-stripped))´´´´´´´´´´´´> polymnia_files.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-complete))´´´´´´´´´´´´> polymnia_files.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofiles)         ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_ufiles    (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond  ("prepare PROJECTS unit test file for program sample code ");
+      MUNIT__append  ('[', "polymnia_files.unit", "SCRP  [0a/·]  (FILES) little script to test files              1s   little          FILES_single     - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_files.unit", "   COND       verify program setup                             - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_files.unit", "     exec     setup the program              UNIT__quiet                                               z_equal  0          ");
+      MUNIT__append  ('>', "polymnia_files.unit", "   REUSE -H-  ===[[ from unit_head ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_files.unit", "   REUSE -Y-  ===[[ from unit_wide ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_files.unit", "   COND       verify program function                          - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_files.unit", "     exec     call single                    FILES_single    \\\"beta\\\"                              z_equal  0          ");
+      MUNIT__append  ('>', "polymnia_files.unit", "   REUSE -÷-  ===[[ from unit_data ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_files.unit", "   COND       verify program teardown                          - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_files.unit", "     exec     shutdown the program           UNIT__end                                                 z_equal  0          ");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia_files.unit"),   10);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_files_unit.o");
+      sprintf (t, "make %s > %s  2>&1", sm_ofiles_unit, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    7);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-full-start))´´´´´´´´´´> polymnia_files_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --debug  polymnia_files");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-stripped))´´´´´´´> polymnia_files_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   polymnia_files");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-complete))´´´´´´´> polymnia_files_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofiles_unit)    ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'C' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_files_unit");
+      sprintf (t, "make polymnia_files_unit > %s  2>&1", sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-debug))´´´´´´´´´´´´´´´> polymnia_files_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-prod))´´´´´´´´´´´´´´´´> polymnia_files_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-complete))´´´´´´´´´´´´> polymnia_files_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofiles_unit)    ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_funcs     (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond  ("prepare FUNCTIONS source code file for program sample code ");
+      MUNIT__append  ('[', "polymnia_funcs.c", "#include    \\\"polymnia.h\\\"");
+      MUNIT__append  ('>', "polymnia_funcs.c", "");
+      MUNIT__append  ('>', "polymnia_funcs.c", "char");
+      MUNIT__append  ('>', "polymnia_funcs.c", "FUNCS_single (char *a_str)");
+      MUNIT__append  ('>', "polymnia_funcs.c", "{");
+      MUNIT__append  ('>', "polymnia_funcs.c", "   printf (\\\"%-20.20s  %-20.20s  å%sæ\\n\\\", __FILE__, __FUNCTION__, a_str);");
+      MUNIT__append  ('>', "polymnia_funcs.c", "}");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia_funcs.c"),    7);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_funcs.o");
+      sprintf (t, "make %s > %s  2>&1", sm_ofuncs, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((norm-start))´´´´´´´´´´´´´´´> polymnia_funcs.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-stripped))´´´´´´´´´´´´> polymnia_funcs.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-complete))´´´´´´´´´´´´> polymnia_funcs.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofuncs)         ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_ufuncs    (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond  ("prepare PROJECTS unit test file for program sample code ");
+      MUNIT__append  ('[', "polymnia_funcs.unit", "SCRP  [0a/·]  (FUNCS) little script to test funcs              1s   little          FUNCS_single     - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "   COND       verify program setup                             - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "     exec     setup the program              UNIT__quiet                                               z_equal  0          ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "   REUSE -H-  ===[[ from unit_head ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "   REUSE -O-  ===[[ from unit_wide ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "   COND       verify program function                          - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "     exec     call single                    FUNCS_single    \\\"beta\\\"                              z_equal  0          ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "   REUSE -ò-  ===[[ from unit_data ]]========================  - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "   COND       verify program teardown                          - - - - - - - - - - - - - - - - - - - -   - - - -  - - - - -  ");
+      MUNIT__append  ('>', "polymnia_funcs.unit", "     exec     shutdown the program           UNIT__end                                                 z_equal  0          ");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia_funcs.unit"),   10);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_funcs_unit.o");
+      sprintf (t, "make %s > %s  2>&1", sm_ofuncs_unit, sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    7);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-full-start))´´´´´´´´´´> polymnia_funcs_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --debug  polymnia_funcs");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-stripped))´´´´´´´> polymnia_funcs_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "koios --code   polymnia_funcs");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-full-complete))´´´´´´´> polymnia_funcs_unit.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofuncs_unit)    ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'C' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_funcs_unit");
+      sprintf (t, "make polymnia_funcs_unit > %s  2>&1", sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),    5);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "#´´´((unit-debug))´´´´´´´´´´´´´´´> polymnia_funcs_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-prod))´´´´´´´´´´´´´´´´> polymnia_funcs_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((unit-complete))´´´´´´´´´´´´> polymnia_funcs_unit ¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofuncs_unit)    ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+char
+MUNIT__create_main      (char a_create)
+{
+   char        t           [LEN_RECD]  = "";
+
+   if (a_create == 's' || a_create == 'b') {
+      yUNIT_mincond  ("prepare FUNCTIONS source code file for program sample code ");
+      MUNIT__append  ('[', "polymnia_main.c", "#include    \\\"polymnia.h\\\"");
+      MUNIT__append  ('>', "polymnia_main.c", "");
+      MUNIT__append  ('>', "polymnia_main.c", "int");
+      MUNIT__append  ('>', "polymnia_main.c", "main (int a_argc, char *a_argv [])");
+      MUNIT__append  ('>', "polymnia_main.c", "{");
+      MUNIT__append  ('>', "polymnia_main.c", "   PROJS_single (\\\"eeny\\\");");
+      MUNIT__append  ('>', "polymnia_main.c", "   FILES_single (\\\"meeny\\\");");
+      MUNIT__append  ('>', "polymnia_main.c", "   FUNCS_single (\\\"miny\\\");");
+      MUNIT__append  ('>', "polymnia_main.c", "   PROJS_single (\\\"moe\\\");");
+      MUNIT__append  ('>', "polymnia_main.c", "   return 0;");
+      MUNIT__append  ('>', "polymnia_main.c", "}");
+      yUNIT_minval   ("check line count"     , yenv_ulines  ("polymnia_main.c"),   11);
+      yUNIT_mindnoc  ();
+   }
+
+   if (a_create == 'c' || a_create == 'b') {
+      yUNIT_mincond  ("verify making polymnia_main.o");
+      sprintf (t, "make > %s  2>&1", sm_output);
+      yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
+      yUNIT_minval   ("execute command"                    , system  (t)                      ,    0);
+      yUNIT_minval   ("check messages count"               , yenv_ulines  (sm_output),   16);
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '[')   , "");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ COMP_BEGIN ]]==============================¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-start))´´´´´´´´´´´´´´´> polymnia_main.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-stripped))´´´´´´´´´´´´> polymnia_main.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((norm-complete))´´´´´´´´´´´´> polymnia_main.o ¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((exec-debug))´´´´´´´´´´´´´´´> polymnia ¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((exec-prod))´´´´´´´´´´´´´´´´> polymnia ¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "gcc ¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "#´´´((exec-done))´´´´´´´´´´´´´´´´> polymnia ¬¬¬¬¬¬¬¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "##===[[ COMP_END ]]================================¬¬¬¬¬¬");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "");
+      yUNIT_minstr   ("... line"                           , yenv_upeek   (sm_output , '>')   , "(n/a)");
+      yUNIT_minchr   ("check for result"                   , yenv_uexists (sm_ofuncs)         ,  'r');
+      yUNIT_mindnoc  ();
+   }
+
+   return 1;
+}
+
+
+

@@ -34,9 +34,9 @@
 #define     P_CREATED   "2008-07"
 /*········· ··········· ´·····························´········································*/
 #define     P_VERMAJOR  "3.-- merging tools into new zenodotus"
-#define     P_VERMINOR  "3.1- on-going updates"
-#define     P_VERNUM    "3.1b"
-#define     P_VERTXT    "verifying up-to-date"
+#define     P_VERMINOR  "3.2- unit testing Makefile"
+#define     P_VERNUM    "3.2a"
+#define     P_VERTXT    "huge addition of zeno_main.munit to verify true workings of Makefile"
 /*········· ··········· ´·····························´········································*/
 #define     P_PRIORITY  "direct, simple, brief, vigorous, and lucid (h.w. fowler)"
 #define     P_PRINCIPAL "[grow a set] and build your wings on the way down (r. bradbury)"
