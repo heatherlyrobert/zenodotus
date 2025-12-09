@@ -123,6 +123,7 @@ SRC_MUNIT   := $(wildcard master.munit) $(wildcard master.sh) $(TEMP)
 OBJ_MUNIT   := $(patsubst %.munit,%_munit.o  ,$(TEMP))
 EXE_MUNIT   := $(patsubst %.munit,%_munit    ,$(TEMP))
 
+
 #===(support file variables)===============================#
 MANUALS     := $(sort $(wildcard $(NAME_BASE)*.[0123456789]))
 EDITLIST    := $(HEADERS) $(SRC_NORM) $(SRC_UTIL)
@@ -142,7 +143,7 @@ endif
 
 ##===[[ MAIN RULES ]]=========================================================##
 
-base               : CODE_BEG $(NAME_DEBUG) $(NAME_UTIL) CODE_END
+base               : CODE_BEG $(NAME_DEBUG) CODE_END
 
 util               : $(NAME_UTIL)
 
@@ -313,6 +314,7 @@ else
 	@printf "#´´´((exec-done))´´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
 endif
 
+
 CODE_END          :
 	@printf "\n##===[[ COMP_END ]]===============================================================================##\n\n"
 
@@ -336,13 +338,6 @@ $(EXE_MUNIT)      : %_munit : %_munit.o $(HEADERS) $(OBJ_DNOMAIN)
 UNIT_END          :
 	@printf "\n##===[[ UNIT_END ]]===============================================================================##\n\n"
 
-#---(utilities)-----------------------#
-$(NAME_UTIL)       : % : %.o $(OBJ_DEBUG)
-	@printf "#´´´((util-debug))´´´´´´´´´´´´´´´> $@                              \n"
-	$(LINKER)  -o $@_debug    $(OBJ_DEBUG)  $@.o          $(LIB_DEBUG)  $(LIB_UTIL)
-	@printf "#´´´((util-prod))´´´´´´´´´´´´´´´´> $@                              \n"
-	$(LINKER)  -o $@          $(OBJ_NORM)   $@.os         $(LIB_NORM)   $(LIB_UTIL)
-	@printf "#´´´((util-done))´´´´´´´´´´´´´´´´> $@                              \n"
 
 
 
@@ -453,7 +448,7 @@ deepclean          : WIPE_BEG small_clean large_clean unit_clean WIPE_END
 
 ##===[[ INSTALLATION ]]=======================================================##
 
-install            : INST_BEG install_prep install_main install_man install_post INST_END
+install            : INST_BEG install_prep install_main install_man install_post install_util INST_END
 
 INST_BEG           :
 	@printf "\n##===[[ INST_BEGIN ]==============================================================================##\n\n"
@@ -495,22 +490,40 @@ else
 	@printf "#´´´((inst-exec-done))´´´´´´´´´´´> $(NAME_BASE)                     \n"
 endif
 
+$(NAME_UTIL)    : $(OBJ_UTILD)
+	@printf "#´´´((exec-debug))´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
+	$(LINKER)  -o $(NAME_UTIL)_debug  $(OBJ_UTILD)  $(LIB_UTIL) 
+	@printf "#´´´((exec-prod))´´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
+	$(LINKER)  -o $(NAME_UTIL)        $(OBJ_UTIL)   $(LIB_UTIL) 
+	@printf "#´´´((exec-done))´´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
+	@printf "#´´´((inst-util-prod))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+	$(COPY)     $(NAME_UTIL)                  $(UTIL_DIR)/;
+	chmod       $(INST_PERMS)                 $(UTIL_DIR)/$(NAME_UTIL);
+	chown       $(INST_OWNER):$(INST_OWNER)   $(UTIL_DIR)/$(NAME_UTIL);
+	sha1sum     $(UTIL_DIR)/$(NAME_UTIL);
+	@printf "#´´´((inst-util-debug))´´´´´´´´´´> $(NAME_UTIL)                        \n";
+	$(COPY)     $(NAME_UTIL)_debug            $(UTIL_DIR)/;
+	chmod       $(INST_PERMS)                 $(UTIL_DIR)/$(NAME_UTIL)_debug;
+	chown       $(INST_OWNER):$(INST_OWNER)   $(UTIL_DIR)/$(NAME_UTIL)_debug;
+	sha1sum     $(UTIL_DIR)/$(NAME_UTIL)_debug;
+	@printf "#´´´((inst-util-done))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+
+
 install_util     :
-	@for ENTRY in $(NAME_UTIL); do \
-	   if [[ -e "$${ENTRY}" ]]; then \
-	      @printf "#´´´((inst-util-prod))´´´´´´´´´´´> $${ENTRY}                        \n"; \
-	      $(COPY)     $${ENTRY}                    $(INST_DIR); \
-	      chmod       $(INST_PERMS)                $(INST_DIR)/$${ENTRY}; \
-	      chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$${ENTRY}; \
-	      sha1sum     $(INST_DIR)/$${ENTRY}; \
-	      @printf "#´´´((inst-util-debug))´´´´´´´´´´> $${ENTRY}                        \n"; \
-	      $(COPY)     $${ENTRY}_debug              $(INST_DIR); \
-	      chmod       $(INST_PERMS)                $(INST_DIR)/$${ENTRY}_debug; \
-	      chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$${ENTRY}_debug; \
-	      sha1sum     $(INST_DIR)/$${ENTRY}_debug; \
-	      @printf "#´´´((inst-util-done))´´´´´´´´´´´> $${ENTRY}                        \n" \
-      fi \
-   done
+#	if [[ -e "$(NAME_UTIL)" ]]; then
+#	   @printf "#´´´((inst-util-prod))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+#	   $(COPY)     $(NAME_UTIL)                  $(INST_DIR)/;
+#	   chmod       $(INST_PERMS)                 $(INST_DIR)/$(NAME_UTIL);
+#	   chown       $(INST_OWNER):$(INST_OWNER)   $(INST_DIR)/$(NAME_UTIL);
+#	   sha1sum     $(INST_DIR)/$(NAME_UTIL);
+#	   @printf "#´´´((inst-util-debug))´´´´´´´´´´> $(NAME_UTIL)                        \n";
+#	   $(COPY)     $(NAME_UTIL)_debug            $(INST_DIR)/;
+#	   chmod       $(INST_PERMS)                 $(INST_DIR)/$(NAME_UTIL)_debug;
+#	   chown       $(INST_OWNER):$(INST_OWNER)   $(INST_DIR)/$(NAME_UTIL)_debug;
+#	   sha1sum     $(INST_DIR)/$(NAME_UTIL)_debug;
+#	   @printf "#´´´((inst-util-done))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+#	fi
+
 
 install_prep       :
 

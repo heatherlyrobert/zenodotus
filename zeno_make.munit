@@ -444,7 +444,7 @@ main                    (int a_argc, char *a_argv [])
     *> else                       printf ("## execute conditions and steps\n");           <* 
     *> printf ("\n");                                                                     <*/
    /*---(startup)------------------------*/
-   yUNIT_minunit ("zeno_make");
+   yUNIT_minunit ("zeno_make", P_ONELINE, x_unit, x_list);
    /*---(scripts)------------------------*/
    zeno_make_uhead         (++n, x_list, x_unit);
    zeno_make_ushared       (++n, x_list, x_unit);
