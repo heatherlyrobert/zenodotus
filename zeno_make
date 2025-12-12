@@ -247,7 +247,7 @@ unit_head.h       : unit_head.unit
 	@printf "#´´´((unit-head-complete))´´´´´´´> $@                               \n"
 
 #---(unit_code)-----------------------#
-$(UNIT_OBJC)      : $(HEADERS) unit_code.c unit_code.h
+$(UNIT_OBJC)      : $(HEADERS) unit_code.c unit_code.h unit_head.h
 	@printf "#´´´((unit-code-start))´´´´´´´´´´> $@                               \n"
 	$(COMPILE)     unit_code.c      -o unit_code.o          $(INC_DIR)
 	@printf "#´´´((unit-code-stripped))´´´´´´´> $@                               \n"
