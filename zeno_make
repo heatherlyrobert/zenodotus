@@ -1,7 +1,7 @@
 #================================[[ beg-code ]]================================#
-SHELL := bash
+.PHONY: CODE_BEG CODE_END UNIT_BEG UNIT_END
 
-default            : CODE_BEG $(NAME_DEBUG) CODE_END
+default            : main
 
 # for creating common variables
 include /usr/local/sbin/zeno_vars
@@ -12,6 +12,8 @@ include /usr/local/sbin/zeno_house
 
 
 ##===[[ MAIN RULES ]]=========================================================##
+
+main               : CODE_BEG $(NAME_DEBUG) CODE_END
 
 util               : $(NAME_UTIL)
 
@@ -67,7 +69,7 @@ unit_head.h       : unit_head.unit
 	@printf "#´´´((unit-head-complete))´´´´´´´> $@                               \n"
 
 #---(unit_code)-----------------------#
-$(SHAR_OBJC)      : $(HEADERS) unit_code.c unit_code.h unit_head.h
+$(SHAR_OBJC)      : $(HEADERS) unit_code.c unit_code.h
 	@printf "#´´´((unit-code-start))´´´´´´´´´´> $@                               \n"
 	$(COMPILE)     unit_code.c      -o unit_code.o          $(INC_DIR)
 	@printf "#´´´((unit-code-stripped))´´´´´´´> $@                               \n"
@@ -160,7 +162,7 @@ allunits           :
 	for ENTRY in $$(ls --color=never -1 *.urun); do printf "\n\n\n$${ENTRY}\n" >> master.urun; cat $${ENTRY} >> master.urun; done
 
 
-all                : default install units man_install
+all                : main install units man_install
 
 
 

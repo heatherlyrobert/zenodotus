@@ -703,17 +703,6 @@ zeno_vars_large         (char a_scrp, char a_list, char a_unit)
    return 0;
 }
 
-/*>                                                                                                                                                              <* 
- *> yLOG.h yLOG_solo.h yLOG_uver.h                                                                                                                               <* 
- *> yLOG_base.c yLOG_driver.c yLOG_error.c yLOG_file.c yLOG_long.c yLOG_short.c yLOG_spec.c yLOG_vol.c                                                           <* 
- *>                                                                                                                                                              <* 
- *> yLOG.3 yLOG_error.3 yLOG_long.3 yLOG_short.3 yLOG_spec.3 yLOG_unit.3 yLOG_uver.3 yLOG_vol.3 yLOG.6 yLOG.7                                                    <* 
- *>                                                                                                                                                              <* 
- *> unit_code.h unit_code.c                                                                                                                                      <* 
- *>                                                                                                                                                              <* 
- *> unit_head.unit yLOG_base.unit yLOG_driver.unit yLOG_error.unit yLOG_file.unit yLOG_long.unit yLOG_short.unit yLOG_vol.unit yLOG_ulog.munit yLOG_uver.munit   <* 
- *>                                                                                                                                                              <*/
-
 char
 zeno_vars_library       (char a_scrp, char a_list, char a_unit)
 {

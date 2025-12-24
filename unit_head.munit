@@ -667,7 +667,7 @@ MUNIT__create_main      (char a_create)
    char        t           [LEN_RECD]  = "";
 
    if (a_create == 's' || a_create == 'b') {
-      yUNIT_mincond  ("prepare FUNCTIONS source code file for program sample code ");
+      yUNIT_mincond  ("prepare MAIN source code file for program sample code ");
       MUNIT__append  ('[', "polymnia_main.c", "#include    \\\"polymnia.h\\\"");
       MUNIT__append  ('>', "polymnia_main.c", "");
       MUNIT__append  ('>', "polymnia_main.c", "int");

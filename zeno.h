@@ -35,8 +35,8 @@
 /*········· ··········· ´·····························´········································*/
 #define     P_VERMAJOR  "3.-- merging tools into new zenodotus"
 #define     P_VERMINOR  "3.2- unit testing Makefile"
-#define     P_VERNUM    "3.2d"
-#define     P_VERTXT    "zeno make variables separated, debugging improved, and unit-tested"
+#define     P_VERNUM    "3.2e"
+#define     P_VERTXT    "zeno vars, print, and make (updated) are fully unit tested again"
 /*········· ··········· ´·····························´········································*/
 #define     P_PRIORITY  "direct, simple, brief, vigorous, and lucid (h.w. fowler)"
 #define     P_PRINCIPAL "[grow a set] and build your wings on the way down (r. bradbury)"

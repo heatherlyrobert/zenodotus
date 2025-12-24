@@ -218,6 +218,8 @@ zeno_make_ucode         (char a_scrp, char a_list, char a_unit)
 
    MUNIT__create_header    ();
 
+   MUNIT__create_uhead     ('b', "unit_head.unit");
+
    yUNIT_mincond  ("attempt to make unit_code.o without unit_code.h");
    sprintf (t, "make %s > %s  2>&1", sm_ocode, sm_output);
    yUNIT_minstr   ("creat make command"                 , t                                ,  "¬");
