@@ -1,3 +1,5 @@
+#include    "zeno.h"
+
 #include    <stdio.h>        /* C_ANSI : strcpy, strlen, strchr, strcmp, ...  */
 #include    <string.h>       /* C_ANSI : printf, snprintf, fgets, fopen, ...  */
 #include    <stdarg.h>       /* C_ANSI : variable argument handling           */
@@ -105,22 +107,41 @@ MUNIT__append           (char a_dir, char a_file [LEN_FULL], char a_recd [LEN_RE
 }
 
 char
-MUNIT__create_makefile  (void)
+MUNIT__create_makefile  (char a_size)
 {
    yUNIT_mincond ("prepare a sample, non-library Makefile");
    MUNIT__append  ('[', sm_makefile, "#================================[[ beg-code ]]================================#");
    MUNIT__append  ('>', sm_makefile, "");
    MUNIT__append  ('>', sm_makefile, " #===(manditory)============================================#");
-   MUNIT__append  ('>', sm_makefile, " NAME_BASE  = polymnia");
-   MUNIT__append  ('>', sm_makefile, " LIB_STD    = -lm");
-   MUNIT__append  ('>', sm_makefile, " LIB_MINE   = -lySTR_debug");
-   MUNIT__append  ('>', sm_makefile, " INST_DIR   = /usr/local/bin");
+   switch (a_size) {
+   case 's' :
+      MUNIT__append  ('>', sm_makefile, "NAME_BASE  = polymnia");
+      MUNIT__append  ('>', sm_makefile, "LIB_STD    = -lm");
+      MUNIT__append  ('>', sm_makefile, "LIB_MINE   = -lySTR_debug");
+      MUNIT__append  ('>', sm_makefile, "INST_DIR   = /usr/local/bin");
+      MUNIT__append  ('>', sm_makefile, "EDIT_TOO   = ");
+      break;
+   case 'L' :
+      MUNIT__append  ('>', sm_makefile, "NAME_BASE  = polymnia");
+      MUNIT__append  ('>', sm_makefile, "LIB_STD    = -lm");
+      MUNIT__append  ('>', sm_makefile, "LIB_MINE   = -lySTR_debug -lyREGEX_debug -lyJOBS_debug -lySORT_debug -lyENV_debug -lyAUDIT_debug -lySCORE_debug");
+      MUNIT__append  ('>', sm_makefile, "INST_DIR   = /usr/local/bin");
+      MUNIT__append  ('>', sm_makefile, "EDIT_TOO   = ");
+      break;
+   case 'y' :
+      MUNIT__append  ('>', sm_makefile, "NAME_BASE  = yLOG");
+      MUNIT__append  ('>', sm_makefile, "LIB_STD    = ");
+      MUNIT__append  ('>', sm_makefile, "LIB_MINE   = ");
+      MUNIT__append  ('>', sm_makefile, "INST_DIR   = ");
+      MUNIT__append  ('>', sm_makefile, "EDIT_TOO   = ulog.sh");
+      break;
+   }
    MUNIT__append  ('>', sm_makefile, "");
-   MUNIT__append  ('>', sm_makefile, " #===(master template)======================================#");
-   MUNIT__append  ('>', sm_makefile, " include /usr/local/sbin/zeno_make");
+   MUNIT__append  ('>', sm_makefile, "#===(master template)======================================#");
+   MUNIT__append  ('>', sm_makefile, "include /usr/local/sbin/zeno_make");
    MUNIT__append  ('>', sm_makefile, "");
-   MUNIT__append  ('>', sm_makefile, " #================================[[ end-code ]]================================#");
-   yUNIT_minval   ("check line count"     , yenv_ulines  (sm_makefile),   12);
+   MUNIT__append  ('>', sm_makefile, "#================================[[ end-code ]]================================#");
+   yUNIT_minval   ("check line count"     , yenv_ulines  (sm_makefile),   13);
    yUNIT_mindnoc  ();
 
    return 1;
@@ -137,7 +158,7 @@ MUNIT__create_uhead     (char a_create, char a_file [LEN_TITLE])
       MUNIT__append  ('>', a_file, "   incl       include public header                polymnia.h                  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   - - - - -   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "   incl       include yENV header                  yCOLOR_solo.h               - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   - - - - -   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "");
-      MUNIT__append  ('>', a_file, "GLOBAL   -H-  placeholder in the uniit head                     0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -H-  placeholder in the uniit head                    ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"zeroth\\\"       z_equal  0                      ");
       yUNIT_minval   ("check line count"     , yenv_ulines  (a_file),    7);
@@ -170,28 +191,28 @@ MUNIT__create_uwide     (char a_create, char a_file [LEN_TITLE])
 
    if (a_create == 's' || a_create == 'b') {
       yUNIT_mincond ("prepare a sample, unit-testing unit_wide file");
-      MUNIT__append  ('[', a_file, "GLOBAL   -A-  set up multi-project, multi-file dataset          0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('[', a_file, "GLOBAL   -A-  set up multi-project, multi-file dataset         ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"first\\\"        z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "GLOBAL   -L-  set up testing directories                        0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -L-  set up testing directories                       ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"second\\\"       z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "GLOBAL   -M-  setup sample project one                          0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -M-  setup sample project one                         ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"third\\\"        z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "GLOBAL   -N-  setup sample project two                          0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -N-  setup sample project two                         ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"fourth\\\"       z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "GLOBAL   -O-  setup sample project three                        0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -O-  setup sample project three                       ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"fifth\\\"        z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "GLOBAL   -P-  shut down testing                                 0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -P-  shut down testing                                ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"sixth\\\"        z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "GLOBAL   -Y-  set up testing (home) directory                   0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -Y-  set up testing (home) directory                  ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"seventh\\\"      z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "GLOBAL   -Z-  remove testing (home) directory                   0s  tbd            - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "GLOBAL   -Z-  remove testing (home) directory                  ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"eighth\\\"       z_equal  0                      ");
       yUNIT_minval   ("check line count"     , yenv_ulines  (a_file),   24);
@@ -225,37 +246,37 @@ MUNIT__create_udata      (char a_create, char a_file [LEN_TITLE])
 
    if (a_create == 's' || a_create == 'b') {
       yUNIT_mincond ("prepare a sample, unit-testing unit_data file");
-      MUNIT__append  ('[', a_file, "CONFIG   -ò-  set up details for sample yLOG                    0s  yLOG           - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('[', a_file, "CONFIG   -ò-  set up details for sample yLOG                    yLOG          ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"ninth\\\"        z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -÷-  set up details for sample polymnia                0s  polymnia       - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -÷-  set up details for sample polymnia                polymnia      ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"tenth\\\"        z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -ê-  set up details for sample gyges                   0s  gyges          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ê-  set up details for sample gyges                   gyges         ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"eleventh\\\"     z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -è-  set up details for sample arachne                 0s  arachne        - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -è-  set up details for sample arachne                 arachne       ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"twelfth\\\"      z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -ñ-  set up details for sample khronos                 0s  khronos        - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ñ-  set up details for sample khronos                 khronos       ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"thirteenth\\\"   z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -ó-  set up details for sample metis                   0s  metis          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ó-  set up details for sample metis                   metis         ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"fourteenth\\\"   z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -é-  set up details for sample yjobs                   0s  yjobs          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -é-  set up details for sample yjobs                   yjobs         ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"fifteenth\\\"    z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -ù-  set up details for sample ystr                    0s  ystr           - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ù-  set up details for sample ystr                    ystr          ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"sixteenth\\\"    z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -ý-  set up details for sample ycalc                   0s  ycalc          - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ý-  set up details for sample ycalc                   ycalc         ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FUNCS_single      \\\"seventeenth\\\"  z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -ú-  set up details for sample little project          0s  little         - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ú-  set up details for sample little project          little        ");
       MUNIT__append  ('>', a_file, "   COND       call project function                             - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 PROJS_single      \\\"eighteenth\\\"   z_equal  0                      ");
-      MUNIT__append  ('>', a_file, "CONFIG   -ÿ-  removing all sample projects                      0s  remove         - - - -  - - - - -  - - - - - ");
+      MUNIT__append  ('>', a_file, "CONFIG   -ÿ-  removing all sample projects                      remove        ");
       MUNIT__append  ('>', a_file, "   COND       call file function                                - - - - - - - - - - - - - - - - - - - - - - - - - - - -  ");
       MUNIT__append  ('>', a_file, "     exec     ... call func                 FILES_single      \\\"nineteenth\\\"   z_equal  0                      ");
       yUNIT_minval   ("check line count"     , yenv_ulines  (a_file),   33);

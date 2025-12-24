@@ -1,0 +1,73 @@
+#include "unit_head.munit"
+
+static char  *s_temp  = "/tmp/zeno_test.txt";
+
+char
+zeno_print_unit         (char a_scrp, char a_list, char a_unit)
+{
+   char        t           [LEN_RECD]  = "";
+
+   yUNIT_minscrpy ("zeno" , "zeno_print" , "(PRINT) verify print_var function");
+   if (a_list == '!')    { yUNIT_minprcs (); return 0; }
+   if (a_unit != 0 && a_scrp != a_unit)  return 0;
+   if (a_list == 'y')                    return 0;
+   MUNIT__scrp_start ();
+
+   yUNIT_mincond  ("verify a quick success");
+   sprintf (t, "zeno_print \"%s\" \"%s\"   > /tmp/zeno_test.txt  2>&1", "ONE"      , "TWO");
+   yUNIT_minstr   ("zeno_print command"                 , t                               ,  "¬");
+   yUNIT_minval   ("call command"                       , system  (t)                     ,    0);
+   yUNIT_minval   ("check output count"                 , yenv_ulines  (s_temp),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '[')   , "   ONE          ( 1)     3åTWOæ");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify a empty title");
+   sprintf (t, "zeno_print \"%s\" \"%s\"   > /tmp/zeno_test.txt  2>&1", ""         , "TWO");
+   yUNIT_minstr   ("zeno_print command"                 , t                               ,  "¬");
+   yUNIT_minval   ("call command"                       , system  (t)                     ,    0);
+   yUNIT_minval   ("check output count"                 , yenv_ulines  (s_temp),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '[')   , "                ( 1)     3åTWOæ");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify empty content");
+   sprintf (t, "zeno_print \"%s\" \"%s\"   > /tmp/zeno_test.txt  2>&1", "ONE"      , "");
+   yUNIT_minstr   ("zeno_print command"                 , t                               ,  "¬");
+   yUNIT_minval   ("call command"                       , system  (t)                     ,    0);
+   yUNIT_minval   ("check output count"                 , yenv_ulines  (s_temp),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '[')   , "   ONE          ( 0)     0åæ");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   yUNIT_mincond  ("verify longer content");
+   sprintf (t, "zeno_print \"%s\" \"%s\"   > /tmp/zeno_test.txt  2>&1", "ONE"      , "two three five twenthy");
+   yUNIT_minstr   ("zeno_print command"                 , t                               ,  "¬");
+   yUNIT_minval   ("call command"                       , system  (t)                     ,    0);
+   yUNIT_minval   ("check output count"                 , yenv_ulines  (s_temp),    1);
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '[')   , "   ONE          ( 4)    22åtwo three five twenthyæ");
+   yUNIT_minstr   ("... line"                           , yenv_upeek   (s_temp , '>')   , "(n/a)");
+   yUNIT_mindnoc  ();
+
+   MUNIT__scrp_finish ();
+   yUNIT_minprcs  ();
+   return 0;
+}
+
+char
+main                    (int a_argc, char *a_argv [])
+{
+   /*---(locals)-----------+-----+-----+-*/
+   int         x_unit      =    0;
+   int         n           =    0;
+   char        x_list      =    0;
+   /*---(startup)------------------------*/
+   yUNIT_minunit (a_argc, a_argv, "zeno_print", P_ONELINE, x_unit, x_list);
+   /*---(scripts)------------------------*/
+   zeno_print_unit         (++n, x_list, x_unit);
+   /*---(wrapup)-------------------------*/
+   yUNIT_mintinu    ();
+   /*---(complete)-----------------------*/
+   return 0;
+}
+

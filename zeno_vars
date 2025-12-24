@@ -1,0 +1,312 @@
+
+
+
+#===[[ CONTENT VARIABLES ]]================================#
+# starts with a 'y' means a library
+ifeq ($(shell printf "%1.1s" $(NAME_BASE)),y)
+   NAME_VER    := $(shell zeno_ver)
+   NAME_EXE    := $(shell printf "lib%s.so.%s.%s.%s"       "$(NAME_BASE)" "$(word 1, $(NAME_VER))" "$(word 2, $(NAME_VER))" "$(word 3, $(NAME_VER))")
+   NAME_INT    := $(shell printf "lib%s.so.%s"             "$(NAME_BASE)" "$(word 1, $(NAME_VER))")
+   NAME_AR     := lib$(NAME_BASE).a
+   NAME_DEBUG  := $(shell printf "lib%s_debug.so.%s.%s.%s" "$(NAME_BASE)" "$(word 1, $(NAME_VER))" "$(word 2, $(NAME_VER))" "$(word 3, $(NAME_VER))")
+   NAME_DINT   := $(shell printf "lib%s_debug.so.%s"       "$(NAME_BASE)" "$(word 1, $(NAME_VER))")
+   NAME_DAR    := lib$(NAME_BASE)_debug.a
+   LIBRARY     := y
+else
+   NAME_EXE    := $(NAME_BASE)
+   NAME_DEBUG  := $(NAME_BASE)_debug
+   LIBRARY     := -
+endif
+# yLOG can not be stripped in this way
+ifeq ($(NAME_BASE),yLOG)
+   DEBUG_VER  := -
+else
+   DEBUG_VER  := y
+endif
+#---(done)-------------------#
+vars_content       :
+	$(PRINTF)   "zeno_make variable debugging (make vars) ======================================\n";
+	$(PRINTF)      "\n";
+	$(PRINTF)   "content·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "NAME_BASE"   "${NAME_BASE}"
+	$(SHOW_VAR)    "NAME_UTIL"   "${NAME_UTIL}"
+	$(SHOW_VAR)    "DEBUG_VER"   "${DEBUG_VER}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "library·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "LIBRARY"     "${LIBRARY}"
+	$(SHOW_VAR)    "NAME_VER"    "${NAME_VER}"
+	$(SHOW_VAR)    "NAME_EXE"    "${NAME_EXE}"
+	$(SHOW_VAR)    "NAME_INT"    "${NAME_INT}"
+	$(SHOW_VAR)    "NAME_AR"     "${NAME_AR}"
+	$(SHOW_VAR)    "NAME_DEBUG"  "${NAME_DEBUG}"
+	$(SHOW_VAR)    "NAME_DINT"   "${NAME_DINT}"
+	$(SHOW_VAR)    "NAME_DAX"    "${NAME_DAR}"
+	$(PRINTF)      "\n";
+#---(done)-------------------#
+
+
+
+#===[[ COMPILING VARIABLES ]]==============================#
+#COMPILE    := gcc -std=gnu89 -x c -g -pg -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -c
+#COMPILE    := gcc -std=gnu89 -x c -g -pg -Wno-stringop-overflow -Wno-discarded-qualifiers -Wstrict-prototypes -Wmissing-prototypes -c
+COMPILE    := gcc -std=gnu89 -x c -g -pg -Wno-stringop-overflow -Wno-discarded-qualifiers -Wno-strict-prototypes -Wno-missing-prototypes -c
+COMPILE_EX :=
+ifeq ($(LIBRARY),y)
+   COMPILE_EX := -fPIC
+endif
+INC_DIR    := -I/usr/local/include $(INC_MINE)
+#---(done)-------------------#
+vars_compile       :
+	$(PRINTF)   "compile·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "COMPILE"     "${COMPILE}"
+	$(SHOW_VAR)    "COMPILE_EX"  "${COMPILE_EX}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ LINKING VARIABLES ]]================================#
+LINKER     := gcc
+LIB_DIR    := -L/usr/local/lib64 -L/usr/lib64  -L/lib64 
+LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE) -lyURG_debug -lyLOG_debug
+ifeq ($(NAME_BASE),yVAR)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+endif
+#ifeq ($(NAME_BASE),yUNIT)
+#   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+#endif
+#ifeq ($(NAME_BASE),koios)
+#   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+#endif
+ifeq ($(NAME_BASE),yLOG)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE)
+endif
+ifeq ($(NAME_BASE),yURG)
+   LIB_DEBUG  := $(LIB_DIR) $(LIB_STD) $(LIB_MINE) -lyLOG_debug
+endif
+LIB_NORM    := $(subst _debug,      ,$(LIB_DEBUG))
+LIB_UNIT    := $(LIB_DEBUG)   -lyUNIT -lyVAR_debug  $(LIB_MYUNIT)
+#---(done)-------------------#
+vars_link          :
+	$(PRINTF)   "linking·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "LINKER"      "${LINKER}"
+	$(SHOW_VAR)    "LIB_DIR"     "${LIB_DIR}"
+	$(SHOW_VAR)    "LIB_STD"     "${LIB_STD}"
+	$(SHOW_VAR)    "LIB_MINE"    "${LIB_MINE}"
+	$(SHOW_VAR)    "LIB_MYUNIT"  "${LIB_MYUNIT}"
+	$(SHOW_VAR)    "LIB_UTIL"    "${LIB_UTIL}"
+	$(SHOW_VAR)    "LIB_NORM"    "${LIB_NORM}"
+	$(SHOW_VAR)    "LIB_DEBUG"   "${LIB_DEBUG}"
+	$(SHOW_VAR)    "LIB_UNIT"    "${LIB_UNIT}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ INSTALLATION VARIABLES ]]===========================#
+INST_OWNER  := root
+INST_PERMS  := 0755
+#---(done)-------------------#
+vars_install       :
+	$(PRINTF)   "install·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "INST_DIR"    "${INST_DIR}"
+	$(SHOW_VAR)    "UTIL_DIR"    "${UTIL_DIR}"
+	$(SHOW_VAR)    "INST_OWNER"  "${INST_OWNER}"
+	$(SHOW_VAR)    "INST_PERMS"  "${INST_PERMS}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ HEADER VARIABLES ]]=================================#
+HEADERS     := $(sort $(wildcard $(NAME_BASE)*.h))
+UNIT_HEAD   := $(wildcard unit_head.unit)
+ifeq ($(UNIT_HEAD),unit_head.unit)
+   UNIT_HEADH  := "unit_head.h"
+else
+   UNIT_HEADH  := ""
+endif
+UNIT_DEFS   := $(wildcard unit_code.h)
+SHAR_CODE   := $(wildcard unit_code.c)
+#---(done)-------------------#
+vars_headers       :
+	$(PRINTF)   "header·vars·····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "INC_MINE"    "${INC_MINE}"
+	$(SHOW_VAR)    "INC_DIR"     "${INC_DIR}"
+	$(SHOW_VAR)    "HEADERS"     "${HEADERS}"
+	$(SHOW_VAR)    "UNIT_HEAD"   "${UNIT_HEAD}"
+	$(SHOW_VAR)    "UNIT_HEADH"  "${UNIT_HEADH}"
+	$(SHOW_VAR)    "UNIT_DEFS"   "${UNIT_DEFS}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ UTILITY VARIABLES ]]================================#
+ifeq ($(NAME_UTIL),)
+   UTIL_SRC    := 
+   UTIL_OBJD   := 
+   UTIL_OBJ    := 
+   UNIT_USRC   := 
+else
+   UTIL_SRC    := $(sort $(wildcard $(NAME_UTIL)*.c))
+   UTIL_OBJD   := $(patsubst %c,%o ,$(UTIL_SRC))
+   UTIL_OBJ    := $(patsubst %c,%os,$(UTIL_SRC))
+   UNIT_USRC   := $(sort $(wildcard $(NAME_UTIL).unit))
+endif
+#---(done)-------------------#
+vars_util          :
+	$(PRINTF)   "utility·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UTIL_SRC"    "${UTIL_SRC}"
+	$(SHOW_VAR)    "UTIL_OBJD"   "${UTIL_OBJD}"
+	$(SHOW_VAR)    "UTIL_OBJ"    "${UTIL_OBJ}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ PRODUCTION VARIABLES ]]=============================#
+#---(sources)----------------#
+temp        := $(wildcard $(NAME_BASE).c) $(wildcard $(NAME_BASE)_[a-z][a-z]*.c)
+SRC_NORM    := $(sort $(filter-out %_unit.c,$(temp)))
+SRC_LINK    := $(patsubst %c,%c ,$(sort $(filter-out %_unit.c,$(wildcard $(NAME_BASE)_[yY][A-Z]*.c))))
+#---(remove utilities)-------------#
+SRC_NORM    := $(subst $(word 1,$(UTIL_SRC)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 2,$(UTIL_SRC)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 3,$(UTIL_SRC)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 4,$(UTIL_SRC)),,$(SRC_NORM))
+SRC_NORM    := $(subst $(word 5,$(UTIL_SRC)),,$(SRC_NORM))
+SRC_NORM    := $(patsubst %c,%c ,$(SRC_NORM))
+#---(objects)----------------#
+SRC_ALL     := $(SRC_NORM) $(SRC_LINK)
+OBJ_DEBUG   := $(patsubst %c,%o ,$(SRC_ALL))
+OBJ_DNOMAIN := $(patsubst %o,%o ,$(filter-out %_main.o,$(OBJ_DEBUG)))
+OBJ_NORM    := $(patsubst %c,%os,$(SRC_ALL))
+OBJ_NNOMAIN := $(filter-out %_main.os,$(OBJ_NORM))
+#---(simple spacing fix)-----------#
+SRC_ALL     := $(patsubst %os,%c ,$(OBJ_NORM))
+SRC_EDIT    := $(HEADERS) $(SRC_NORM) $(SRC_LINK) $(UTIL_SRC) $(UNIT_DEFS) $(SHAR_CODE)
+#---(done)-------------------#
+vars_prod          :
+	$(PRINTF)   "prod·vars·······´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "SRC_NORM"    "${SRC_NORM}"
+	$(SHOW_VAR)    "SRC_LINK"    "${SRC_LINK}"
+	$(SHOW_VAR)    "SRC_ALL"     "${SRC_ALL}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "prod·objects····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "OBJ_DEBUG"   "${OBJ_DEBUG}"
+	$(SHOW_VAR)    "OBJ_NORM"    "${OBJ_NORM}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "prod·no-mains···´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "OBJ_DNOMAIN" "${OBJ_DNOMAIN}"
+	$(SHOW_VAR)    "OBJ_NNOMAIN" "${OBJ_NNOMAIN}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "vi·edit·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "SRC_EDIT"    "${SRC_EDIT}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ UNIT-TESTING VARIABLES ]]===========================#
+#===(unit testing support)=================================#
+SHAR_WIDE   := $(wildcard unit_wide.unit)
+SHAR_DATA   := $(wildcard unit_data.unit)
+#---(sources)----------------#
+SHAR_ALL    := $(SHAR_WIDE) $(SHAR_DATA)
+#---(objects)----------------#
+SHAR_OBJC   := $(patsubst %.c,%.o       ,$(SHAR_CODE))
+SHAR_OBJD   := $(patsubst %.unit,%.o    ,$(SHAR_ALL))
+SHAR_OBJ    := $(patsubst %.unit,%.os   ,$(SHAR_ALL))
+#---(done)-------------------#
+vars_unit_share    :
+	$(PRINTF)   "unit·test·share·´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "SHAR_CODE"   "${SHAR_CODE}"
+	$(SHOW_VAR)    "SHAR_WIDE"   "${SHAR_WIDE}"
+	$(SHOW_VAR)    "SHAR_DATA"   "${SHAR_DATA}"
+	$(SHOW_VAR)    "SHAR_ALL"    "${SHAR_ALL}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "unit·test·objects·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "SHAR_OBJC"   "${SHAR_OBJC}"
+	$(SHOW_VAR)    "SHAR_OBJD"   "${SHAR_OBJD}"
+	$(SHOW_VAR)    "SHAR_OBJ"    "${SHAR_OBJ}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ UNIT-TESTING VARIABLES ]============================#
+#---(editing values)---------#
+UNIT_RSRC   := $(sort $(wildcard $(NAME_BASE).unit)) $(sort $(wildcard $(NAME_BASE)_[a-z][a-z]*.unit))
+UNIT_LSRC   := $(sort $(wildcard $(NAME_BASE)_[yY][A-Z]*.unit))
+UNIT_SSRC   := $(sort $(wildcard $(NAME_BASE)*.sunit))
+UNIT_EDIT   := $(UNIT_HEAD) $(UNIT_RSRC) $(UNIT_LSRC) $(UNIT_SSRC) $(UNIT_MSRC) $(UNIT_USRC) $(SHAR_WIDE) $(SHAR_DATA)
+#---(sources)----------------#
+temp        := $(UNIT_RSRC) $(UNIT_LSRC) $(UNIT_SSRC)
+UNIT_SRC    := $(patsubst %.unit,%.unit      ,$(temp))
+#---(objects)----------------#
+UNIT_OBJD   := $(patsubst %.unit,%_unit.o    ,$(UNIT_SRC))
+UNIT_OBJ    := $(patsubst %.unit,%_unit.os   ,$(UNIT_SRC))
+#---(executables)------------#
+UNIT_EXED   := $(patsubst %.unit,%_unit_debug,$(UNIT_SRC))
+UNIT_EXE    := $(patsubst %.unit,%_unit      ,$(UNIT_SRC))
+#---(munit files)------------#
+temp        := $(sort $(wildcard $(NAME_BASE)*.munit))
+UNIT_MSRC   := $(patsubst %.munit,%.munit     ,$(wildcard master.munit) $(wildcard master.sh) $(temp))
+UNIT_MOBJ   := $(patsubst %.munit,%_munit.o   ,$(temp))
+UNIT_MEXE   := $(patsubst %.munit,%_munit     ,$(temp))
+#---(done)-------------------#
+vars_unit          :
+	$(PRINTF)   "unit·edit·vars··´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UNIT_RSRC"   "${UNIT_RSRC}"
+	$(SHOW_VAR)    "UNIT_LSRC"   "${UNIT_LSRC}"
+	$(SHOW_VAR)    "UNIT_SSRC"   "${UNIT_SSRC}"
+	$(SHOW_VAR)    "UNIT_USRC"   "${UNIT_USRC}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "unit·test·vars··´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UNIT_SRC"    "${UNIT_SRC}"
+	$(SHOW_VAR)    "UNIT_OBJD"   "${UNIT_OBJD}"
+	$(SHOW_VAR)    "UNIT_OBJ"    "${UNIT_OBJ}"
+	$(SHOW_VAR)    "UNIT_EXED"   "${UNIT_EXED}"
+	$(SHOW_VAR)    "UNIT_EXE"    "${UNIT_EXE}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "munit·test·vars·´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UNIT_MSRC"   "${UNIT_MSRC}"
+	$(SHOW_VAR)    "UNIT_MOBJ"   "${UNIT_MOBJ}"
+	$(SHOW_VAR)    "UNIT_MEXE"   "${UNIT_MEXE}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "vi·unit·vars····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UNIT_EDIT"   "${UNIT_EDIT}"
+	$(PRINTF)      "\n";
+
+
+
+#===[[ DOCUMENTATION VARIABLES ]]==========================#
+MANUALS     := $(sort $(wildcard $(NAME_BASE)*.[0123456789]))
+vars_manuals       :
+	$(PRINTF)   "manual·vars·····´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "MANUALS"     "${MANUALS}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "end-of-report.  done, finito, completare. =====================================\n";
+
+
+
+#===[[ HOUSEKEEPING VARIABLES ]]===========================#
+COPY        := cp -f  
+MOVE        := mv -f  
+CLEAN       := rm -f
+PRINTF      := @printf
+SHOW_VAR    := @/usr/local/sbin/zeno_print 
+ifeq ($(DEBUG_VER),y)
+   STRIP      := @grep -a -v -e " DEBUG_" -e " yLOG_" 
+else
+   STRIP      := cat
+endif
+
+
+
+#===[[ DEBUGGING ]]========================================#
+vars               : vars_content vars_compile vars_link vars_install vars_headers vars_util vars_prod vars_unit_share vars_unit vars_manuals
+
+vi_edit            :
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(SRC_EDIT)
+
+vi_man             :
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(MANUALS)
+
+vi_unit            :
+	vi -c "call HBUF_on()" -c "call HTAG_on()" $(UNIT_EDIT)
+

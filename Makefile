@@ -29,6 +29,13 @@ install            :
 	@sha1sum             /usr/local/sbin/zeno_prep
 	cp -f zeno_make      /usr/local/sbin/zeno_make
 	@sha1sum             /usr/local/sbin/zeno_make
+	cp -f zeno_print     /usr/local/sbin/zeno_print
+	chmod +x             /usr/local/sbin/zeno_print
+	@sha1sum             /usr/local/sbin/zeno_print
+	cp -f zeno_vars      /usr/local/sbin/zeno_vars
+	@sha1sum             /usr/local/sbin/zeno_vars
+	cp -f zeno_house     /usr/local/sbin/zeno_house
+	@sha1sum             /usr/local/sbin/zeno_house
 	#---(commit)----------------------#
 	cp -f zeno_now.sh    /usr/local/sbin/zeno_now
 	@sha1sum             /usr/local/sbin/zeno_now 
@@ -41,10 +48,22 @@ install            :
 	#---(done)------------------------#
 
 units              :
-	cp  -f zeno_make.munit zeno_make.c
-	gcc -c zeno_make.c      -o zeno_make.o
-	gcc -o zeno_make_munit     zeno_make.o  -lyUNIT -lyVAR -lyLOG -lyURG
+	#---(zeno_make)-----------------------#
+	cp  -f zeno_make.munit      zeno_make.c
+	gcc -c zeno_make.c       -o zeno_make.o
+	gcc -o zeno_make_munit      zeno_make.o  -lyUNIT -lyVAR -lyLOG -lyURG
 	rm  -f zeno_make.c
+	#---(zeno_print)----------------------#
+	cp  -f zeno_print.munit     zeno_print.c
+	gcc -c zeno_print.c      -o zeno_print.o
+	gcc -o zeno_print_munit     zeno_print.o  -lyUNIT -lyVAR -lyLOG -lyURG
+	rm  -f zeno_print.c
+	#---(zeno_vars)-----------------------#
+	cp  -f zeno_vars.munit      zeno_vars.c
+	gcc -c zeno_vars.c       -o zeno_vars.o
+	gcc -o zeno_vars_munit      zeno_vars.o  -lyUNIT -lyVAR -lyLOG -lyURG
+	rm  -f zeno_vars.c
+	#---(done)------------------------#
 
 deepclean          :
 	#---(executables)---------------------#
@@ -76,10 +95,10 @@ deepclean          :
 	rm -f       gdb_head
 
 vi_edit            :
-	vi -c "call HBUF_on()" -c "call HTAG_on()" zeno.h zeno_lib.c zeno_ver.c zeno_inst.sh zeno_prep zeno_make zeno_now.sh zeno_opengl.h zeno_curses.h Makefile
+	vi -c "call HBUF_on()" -c "call HTAG_on()" zeno.h zeno_lib.c zeno_ver.c zeno_inst.sh zeno_prep zeno_make zeno_print zeno_vars zeno_house zeno_now.sh zeno_opengl.h zeno_curses.h Makefile
 
 vi_unit            :
-	vi -c "call HBUF_on()" -c "call HTAG_on()" unit_head.munit zeno_make.munit
+	vi -c "call HBUF_on()" -c "call HTAG_on()" unit_head.munit zeno_make.munit zeno_print.munit zeno_vars.munit zeno_house.munit
 
 remove             :
 	#---(new names and versions)----------#

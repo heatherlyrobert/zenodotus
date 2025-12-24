@@ -1,0 +1,242 @@
+
+
+
+##===[[ CLEAN/WIPE ]]=========================================================##
+
+WIPE_BEG           :
+	@printf "\n##===[[ WIPE_BEGIN ]==============================================================================##\n\n"
+
+large_clean        :
+ifeq ($(LIBRARY),y)
+	${CLEAN}    lib*.so*
+	${CLEAN}    lib*.a
+else
+	$(CLEAN)    $(NAME_BASE)
+	$(CLEAN)    $(NAME_DEBUG)
+endif
+	$(CLEAN)    $(NAME_BASE)*_unit
+	$(CLEAN)    $(NAME_BASE)*_unit_debug
+	@for ENTRY in $(NAME_UTIL); do \
+	   if [[ -e "$${ENTRY}" ]]; then \
+         printf "removing %s\n" "$${ENTRY}"; \
+	      $(CLEAN)    $${ENTRY}; \
+         printf "removing %s\n" "$${ENTRY}_debug"; \
+	      $(CLEAN)    $${ENTRY}_debug; \
+      fi \
+   done
+	$(CLEAN)    .*.swp
+	$(CLEAN)    .*.swn
+	$(CLEAN)    .*.swo
+	$(CLEAN)    *.tmp
+
+unit_clean         :
+	#---(normal)--------------------------#
+	$(CLEAN)    master.urun
+	$(CLEAN)    $(NAME_BASE)*_unit.code
+	$(CLEAN)    $(NAME_BASE)*_unit.c
+	$(CLEAN)    $(NAME_BASE)*.urun
+	$(CLEAN)    $(NAME_BASE)*.tmp
+	$(CLEAN)    $(NAME_BASE)*.unit.old
+	$(CLEAN)    $(NAME_BASE)*_unit
+	$(CLEAN)    $(NAME_BASE)*_unit_debug
+	#---(munit)---------------------------#
+	$(CLEAN)    $(NAME_BASE)*_munit
+	$(CLEAN)    $(NAME_BASE)*_munit.o
+	$(CLEAN)    $(NAME_BASE)*.murun
+	#---(shared files)--------------------#
+	$(CLEAN)    unit_head.h
+	$(CLEAN)    unit_wide.h
+	$(CLEAN)    unit_wide.cs
+	$(CLEAN)    unit_data.h
+	$(CLEAN)    unit_data.cs
+	$(CLEAN)    unit.globals
+	#---(object files)--------------------#
+	$(CLEAN)    unit*.o
+	$(CLEAN)    unit*.os
+
+small_clean        :
+	#---(object and stripped files)-------#
+	$(CLEAN)    $(NAME_BASE)*.o
+	$(CLEAN)    $(NAME_BASE)*.cs
+	$(CLEAN)    $(NAME_BASE)*.os
+	$(CLEAN)    $(NAME_BASE)*.Sc
+	$(CLEAN)    $(NAME_BASE)*.So
+	#---(HFIX stuff)----------------------#
+	$(CLEAN)    HFIX.log
+	$(CLEAN)    HFIX.out
+	$(CLEAN)    HFIX.buf
+	$(CLEAN)    /tmp/HFIX.log
+	$(CLEAN)    /tmp/HFIX.out
+	$(CLEAN)    /tmp/HFIX.buf
+	#---(HTAG stuff)----------------------#
+	$(CLEAN)    HTAG.c
+	$(CLEAN)    HTAG.gcalls
+	$(CLEAN)    HTAG.lcalls
+	$(CLEAN)    HTAG.depth
+	$(CLEAN)    HTAG.mydepth
+	$(CLEAN)    polymnia.htags
+	$(CLEAN)    polymnia.mystry
+	$(CLEAN)    polymnia.ylib
+	#---(junk files)----------------------#
+	$(CLEAN)    2
+	$(CLEAN)    , 
+	$(CLEAN)    ,q
+	$(CLEAN)    ,qq
+	$(CLEAN)    :w
+	$(CLEAN)    :{
+	$(CLEAN)    *~
+	$(CLEAN)    temp*
+	$(CLEAN)    version.txt
+	$(CLEAN)    gdb_head
+
+WIPE_END           :
+	@printf "\n##===[[ WIPE_END ]]===============================================================================##\n\n"
+
+clean              : WIPE_BEG small_clean WIPE_END
+
+deepclean          : WIPE_BEG small_clean large_clean unit_clean WIPE_END
+
+
+
+
+##===[[ INSTALLATION ]]=======================================================##
+
+install            : INST_BEG install_prep install_main install_man install_post install_util INST_END
+
+INST_BEG           :
+	@printf "\n##===[[ INST_BEGIN ]==============================================================================##\n\n"
+
+install_main       :
+ifeq ($(LIBRARY),y)
+	@printf "#´´´((inst-lib-start))´´´´´´´´´´´> $(NAME_BASE)                     \n"
+	@zeno_lib  -s $(NAME_BASE)
+	@ldconfig
+	@printf "#´´´((inst-lib-headers)´´´´´´´´´´> $(NAME_BASE)                     \n"
+	@sha1sum   /usr/local/include/$(NAME_BASE).h
+	@if [[ -e "$(NAME_BASE)_solo.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_solo.h; fi
+	@if [[ -e "$(NAME_BASE)_uver.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_uver.h; fi
+	@if [[ -e "$(NAME_BASE)_unit.h" ]]; then sha1sum /usr/local/include/$(NAME_BASE)_unit.h; fi
+	@printf "#´´´((inst-lib-prod))´´´´´´´´´´´´> $(NAME_BASE)                     \n"
+	@sha1sum   /usr/local/lib64/$(NAME_EXE)
+	@zeno_lib  -a $(NAME_BASE)
+	@ldconfig
+	@sha1sum   /usr/local/lib64/$(NAME_AR)
+	@zeno_lib  -S $(NAME_BASE)_debug
+	@ldconfig
+	@printf "#´´´((inst-lib-debug))´´´´´´´´´´´> $(NAME_BASE)                     \n"
+	@sha1sum   /usr/local/lib64/$(NAME_DEBUG)
+	@zeno_lib  -A $(NAME_BASE)_debug
+	@ldconfig
+	@sha1sum   /usr/local/lib64/$(NAME_DAR)
+	@printf "#´´´((inst-lib-done))´´´´´´´´´´´´> $(NAME_BASE)                     \n"
+else
+	@printf "#´´´((inst-exec-prod))´´´´´´´´´´´> $(NAME_BASE)                     \n"
+	@$(COPY)     $(NAME_BASE)                 $(INST_DIR)
+	@chmod       $(INST_PERMS)                $(INST_DIR)/$(NAME_BASE)
+	@chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$(NAME_BASE)
+	@sha1sum     $(INST_DIR)/$(NAME_BASE)
+	@printf "#´´´((inst-exec-debug))´´´´´´´´´´> $(NAME_BASE)                     \n"
+	@$(COPY)     $(NAME_DEBUG)                $(INST_DIR)
+	@chmod       $(INST_PERMS)                $(INST_DIR)/$(NAME_DEBUG)
+	@chown       $(INST_OWNER):$(INST_OWNER)  $(INST_DIR)/$(NAME_DEBUG)
+	@sha1sum     $(INST_DIR)/$(NAME_DEBUG)
+	@printf "#´´´((inst-exec-done))´´´´´´´´´´´> $(NAME_BASE)                     \n"
+endif
+
+
+install_util     :
+#	if [[ -e "$(NAME_UTIL)" ]]; then
+#	   @printf "#´´´((inst-util-prod))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+#	   $(COPY)     $(NAME_UTIL)                  $(INST_DIR)/;
+#	   chmod       $(INST_PERMS)                 $(INST_DIR)/$(NAME_UTIL);
+#	   chown       $(INST_OWNER):$(INST_OWNER)   $(INST_DIR)/$(NAME_UTIL);
+#	   sha1sum     $(INST_DIR)/$(NAME_UTIL);
+#	   @printf "#´´´((inst-util-debug))´´´´´´´´´´> $(NAME_UTIL)                        \n";
+#	   $(COPY)     $(NAME_UTIL)_debug            $(INST_DIR)/;
+#	   chmod       $(INST_PERMS)                 $(INST_DIR)/$(NAME_UTIL)_debug;
+#	   chown       $(INST_OWNER):$(INST_OWNER)   $(INST_DIR)/$(NAME_UTIL)_debug;
+#	   sha1sum     $(INST_DIR)/$(NAME_UTIL)_debug;
+#	   @printf "#´´´((inst-util-done))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+#	fi
+
+
+install_prep       :
+
+install_post       :
+
+INST_END           :
+	@printf "\n##===[[ INST_END ]]===============================================================================##\n\n"
+
+
+
+
+MANS_BEG          :
+	@printf "\n##===[[ MANS_BEGIN ]]=============================================================================##\n\n"
+
+man_post           :
+
+man_install        :
+	@for MAN in $(MANUALS); do \
+	   printf "#´´´((mans-start)´´´´´´´´´´´´´´´´> $${MAN}                          \n"; \
+	   declare MANDIR="/usr/local/man/man$${MAN: -1:1}"; \
+	   declare MANBZ2="$${MAN}.bz2"; \
+	  	$(COPY)     $${MAN}    $${MANDIR}/; \
+	  	bzip2 -f    $${MANDIR}/$${MAN}; \
+	  	chmod 0644  $${MANDIR}/$${MANBZ2}; \
+	  	sha1sum     $${MANDIR}/$${MANBZ2}; \
+	   printf "#´´´((mans-done)´´´´´´´´´´´´´´´´´> $${MAN}                          \n"; \
+	done
+#mandb > /dev/null
+
+install_man        : man_install man_post
+
+manuals            : MANS_BEG man_install man_post MANS_END
+
+MANS_END          :
+	@printf "\n##===[[ MANS_END ]]===============================================================================##\n\n"
+
+
+
+remove             : remove_prep remove_main remove_man remove_post
+
+remove_man         :
+	@for MAN in $(MANUALS); do \
+	   declare MANDIR="/usr/share/man/man$${MAN: -1:1}"; \
+ 	   declare MANBZ2="$${MAN}.bz2"; \
+	   if [[ -e "$${MANDIR}/$${MANBZ2}" ]]; then \
+         printf "removing manual      : %s/%s\n" "$${MANDIR}" "$${MANBZ2}"; \
+         rm -f       $${MANDIR}/$${MANBZ2}; \
+      fi \
+   done
+	@for MAN in $(MANUALS); do \
+	   declare MANDIR="/usr/local/man/man$${MAN: -1:1}"; \
+ 	   declare MANBZ2="$${MAN}.bz2"; \
+	   if [[ -e "$${MANDIR}/$${MANBZ2}" ]]; then \
+         printf "removing manual      : %s/%s\n" "$${MANDIR}" "$${MANBZ2}"; \
+         rm -f       $${MANDIR}/$${MANBZ2}; \
+      fi \
+   done
+# mandb > /dev/null
+
+remove_main        :
+	#---(remove from production)----------#
+ifeq ($(LIBRARY),y)
+	zeno_lib  -D  $(NAME_BASE)
+	zeno_lib  -D  $(NAME_DEBUG)
+	ldconfig
+else
+	$(CLEAN)    $(INST_DIR)/$(NAME_BASE)
+	$(CLEAN)    $(INST_DIR)/$(NAME_DEBUG)
+endif
+	@for ENTRY in $(NAME_UTIL); do \
+	   if [[ -e "$(INST_DIR)/$${ENTRY}" ]]; then \
+         printf "removing utility     : %s/%s\n" "$(INST_DIR)" "$${ENTRY}"; \
+	      $(CLEAN)    $(INST_DIR)/$${ENTRY}; \
+         printf "removing utility     : %s/%s\n" "$(INST_DIR)" "$${ENTRY}_debug"; \
+	      $(CLEAN)    $(INST_DIR)/$${ENTRY}_debug; \
+      fi \
+   done
+
+remove_prep        :
+
+remove_post        :

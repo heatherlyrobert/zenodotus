@@ -1,0 +1,7 @@
+#!/bin/bash
+
+declare -i x_len=${#2}
+declare -i x_cnt=$(echo ${2} | wc -w)
+printf "   %-12.12s (%2d)   %3då%sæ\n" "$1" "$x_cnt" "$x_len" "$2"
+
+
