@@ -120,6 +120,9 @@ MUNIT__create_makefile  (char a_size)
       MUNIT__append  ('>', sm_makefile, "LIB_MINE   = -lySTR_debug");
       MUNIT__append  ('>', sm_makefile, "INST_DIR   = /usr/local/bin");
       MUNIT__append  ('>', sm_makefile, "EDIT_TOO   = ");
+      MUNIT__append  ('>', sm_makefile, "NAME_UTIL  = ");
+      MUNIT__append  ('>', sm_makefile, "LIB_UTIL   = ");
+      MUNIT__append  ('>', sm_makefile, "UTIL_DIR   = ");
       break;
    case 'L' :
       MUNIT__append  ('>', sm_makefile, "NAME_BASE  = polymnia");
@@ -127,6 +130,9 @@ MUNIT__create_makefile  (char a_size)
       MUNIT__append  ('>', sm_makefile, "LIB_MINE   = -lySTR_debug -lyREGEX_debug -lyJOBS_debug -lySORT_debug -lyENV_debug -lyAUDIT_debug -lySCORE_debug");
       MUNIT__append  ('>', sm_makefile, "INST_DIR   = /usr/local/bin");
       MUNIT__append  ('>', sm_makefile, "EDIT_TOO   = ");
+      MUNIT__append  ('>', sm_makefile, "NAME_UTIL  = ");
+      MUNIT__append  ('>', sm_makefile, "LIB_UTIL   = ");
+      MUNIT__append  ('>', sm_makefile, "UTIL_DIR   = ");
       break;
    case 'y' :
       MUNIT__append  ('>', sm_makefile, "NAME_BASE  = yLOG");
@@ -134,6 +140,19 @@ MUNIT__create_makefile  (char a_size)
       MUNIT__append  ('>', sm_makefile, "LIB_MINE   = ");
       MUNIT__append  ('>', sm_makefile, "INST_DIR   = ");
       MUNIT__append  ('>', sm_makefile, "EDIT_TOO   = ulog.sh");
+      MUNIT__append  ('>', sm_makefile, "NAME_UTIL  = ");
+      MUNIT__append  ('>', sm_makefile, "LIB_UTIL   = ");
+      MUNIT__append  ('>', sm_makefile, "UTIL_DIR   = ");
+      break;
+   case 't' :
+      MUNIT__append  ('>', sm_makefile, "NAME_BASE  = yTSAE");
+      MUNIT__append  ('>', sm_makefile, "LIB_STD    = -lm");
+      MUNIT__append  ('>', sm_makefile, "LIB_MINE   = -lySTR_debug -lyENV_debug -lyPARSE_debug -lySORT_debug");
+      MUNIT__append  ('>', sm_makefile, "INST_DIR   = /usr/local/lib64");
+      MUNIT__append  ('>', sm_makefile, "EDIT_TOO   = ");
+      MUNIT__append  ('>', sm_makefile, "NAME_UTIL  = tsae");
+      MUNIT__append  ('>', sm_makefile, "LIB_UTIL   = -lyTSAE_debug -lyURG_debug -lyLOG_debug");
+      MUNIT__append  ('>', sm_makefile, "UTIL_DIR   = /usr/local/bin");
       break;
    }
    MUNIT__append  ('>', sm_makefile, "");
@@ -141,7 +160,7 @@ MUNIT__create_makefile  (char a_size)
    MUNIT__append  ('>', sm_makefile, "include /usr/local/sbin/zeno_make");
    MUNIT__append  ('>', sm_makefile, "");
    MUNIT__append  ('>', sm_makefile, "#================================[[ end-code ]]================================#");
-   yUNIT_minval   ("check line count"     , yenv_ulines  (sm_makefile),   13);
+   yUNIT_minval   ("check line count"     , yenv_ulines  (sm_makefile),   16);
    yUNIT_mindnoc  ();
 
    return 1;

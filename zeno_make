@@ -17,37 +17,64 @@ main               : CODE_BEG $(NAME_DEBUG) CODE_END
 
 util               : $(NAME_UTIL)
 
-units              : UNIT_BEG $(SHAR_OBJD) $(UNIT_EXE) $(EXE_MUNIT) UNIT_END
+units              : UNIT_BEG $(SHAR_OBJD) $(UNIT_EXE) $(UNIT_UEXE) $(EXE_MUNIT) UNIT_END
 
 
 
 ##===[[ UTILITY CREATION ]]===================================================##
 #---(objects)-------------------------#
-$(UTIL_OBJD)      : %.o : %.c $(HEADERS)
+$(UTIL_OBJD)      : %.o : %.c $(HEADERS) $(UTIL_HEADER) $(UTIL_SRC)
 	@printf "#´´´((util-start))´´´´´´´´´´´´´´´> $@                               \n"
 	$(COMPILE)     $<                          $(INC_DIR)
 	@printf "#´´´((util-stripped))´´´´´´´´´´´´> $@                               \n"
 	$(STRIP)       $<        >  $<s
 	$(COMPILE)     $<s      -o  $@s            $(INC_DIR)
 	@printf "#´´´((util-complete))´´´´´´´´´´´´> $@                               \n"
-#---(production)----------------------#
+
+#---(executable)----------------------#
 $(NAME_UTIL)    : $(UTIL_OBJD)
-	@printf "#´´´((exec-debug))´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
+	@printf "#´´´((util-debug))´´´´´´´´´´´´´´´> $(NAME_UTIL)                    \n"
 	$(LINKER)  -o $(NAME_UTIL)_debug  $(UTIL_OBJD)  $(LIB_UTIL) 
-	@printf "#´´´((exec-prod))´´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
+	@printf "#´´´((util-prod))´´´´´´´´´´´´´´´´> $(NAME_UTIL)                    \n"
 	$(LINKER)  -o $(NAME_UTIL)        $(UTIL_OBJ)   $(LIB_UTIL) 
-	@printf "#´´´((exec-done))´´´´´´´´´´´´´´´´> $(NAME_EXE)                     \n"
-	@printf "#´´´((inst-util-prod))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+	@printf "#´´´((util-done))´´´´´´´´´´´´´´´´> $(NAME_UTIL)                    \n"
+	@printf "#´´´((util-inst-prod))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
 	$(COPY)     $(NAME_UTIL)                  $(UTIL_DIR)/;
 	chmod       $(INST_PERMS)                 $(UTIL_DIR)/$(NAME_UTIL);
 	chown       $(INST_OWNER):$(INST_OWNER)   $(UTIL_DIR)/$(NAME_UTIL);
 	sha1sum     $(UTIL_DIR)/$(NAME_UTIL);
-	@printf "#´´´((inst-util-debug))´´´´´´´´´´> $(NAME_UTIL)                        \n";
+	@printf "#´´´((util-inst-debug))´´´´´´´´´´> $(NAME_UTIL)                        \n";
 	$(COPY)     $(NAME_UTIL)_debug            $(UTIL_DIR)/;
 	chmod       $(INST_PERMS)                 $(UTIL_DIR)/$(NAME_UTIL)_debug;
 	chown       $(INST_OWNER):$(INST_OWNER)   $(UTIL_DIR)/$(NAME_UTIL)_debug;
 	sha1sum     $(UTIL_DIR)/$(NAME_UTIL)_debug;
-	@printf "#´´´((inst-util-done))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+	@printf "#´´´((util-inst-done))´´´´´´´´´´´> $(NAME_UTIL)                        \n";
+
+##===[[ UTILITY UNIT-TESTING ]]===============================================##
+#---(objects)-------------------------#
+$(UNIT_UOBJD)     : %_unit.o : %.unit $(HEADERS) $(UTIL_HEADER) $(UTIL_USRC)
+	@printf "#´´´((util-unit-start))´´´´´´´´´´> $@                               \n"
+#	$(COPY)  $< $(UTIL_UUNIT)
+#	koios --debug  $(UTIL_UUNIT)           
+	koios --debug  --util=$(NAME_UTIL) $(patsubst %.unit,%,$<)
+#	$(MOVE)  $(UTIL_UCODE) $(patsubst %.unit,%,$<)_unit.c
+	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.c           $(INC_DIR)
+	@printf "#´´´((util-unit-stripped))´´´´´´´> $@                               \n"
+#	koios --code   $(UTIL_UUNIT)
+#	$(MOVE)  $(UTIL_UCODE)s $(patsubst %.unit,%,$<)_unit.cs
+	koios --code   --util=$(NAME_UTIL) $(patsubst %.unit,%,$<)
+	$(COMPILE)     $(patsubst %.unit,%,$<)_unit.cs  -o $@s  $(INC_DIR)
+#	$(CLEAN)       $(UTIL_UUNIT);
+	@printf "#´´´((util-unit-complete))´´´´´´´> $@                               \n"
+
+#---(executable)----------------------#
+$(UNIT_UEXE)      : %_unit : %_unit.o $(HEADERS) $(UTIL_OBJDNM) $(SHAR_OBJD) $(SHAR_OBJC)
+	@printf "#´´´((unit-debug))´´´´´´´´´´´´´´´> $@                              \n"
+	$(LINKER) -o $@_debug    $<   $(UTIL_OBJDNM) $(SHAR_OBJD) $(SHAR_OBJC) -l$(NAME_BASE)_debug $(LIB_UNIT);
+	@printf "#´´´((unit-prod))´´´´´´´´´´´´´´´´> $@                              \n"
+	$(LINKER) -o $@          $<   $(UTIL_OBJNM)  $(SHAR_OBJ)  $(SHAR_OBJC) -l$(NAME_BASE)       $(LIB_UNIT);
+	@printf "#´´´((unit-complete))´´´´´´´´´´´´> $@                              \n"
+
 
 
 

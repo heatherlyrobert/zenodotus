@@ -57,6 +57,8 @@ endif
 INC_DIR    := -I/usr/local/include $(INC_MINE)
 #---(done)-------------------#
 vars_compile       :
+	$(PRINTF)   "TECHNICAL --------------------------------------------------------´\n";
+	$(PRINTF)      "\n";
 	$(PRINTF)   "compile·vars····´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "COMPILE"     "${COMPILE}"
 	$(SHOW_VAR)    "COMPILE_EX"  "${COMPILE_EX}"
@@ -85,6 +87,7 @@ ifeq ($(NAME_BASE),yURG)
 endif
 LIB_NORM    := $(subst _debug,      ,$(LIB_DEBUG))
 LIB_UNIT    := $(LIB_DEBUG)   -lyUNIT -lyVAR_debug  $(LIB_MYUNIT)
+#LIB_UTIL    := $(wildcard $(NAME_UTIL)_*.c)
 #---(done)-------------------#
 vars_link          :
 	$(PRINTF)   "linking·vars····´·········´·········´·········´·········´·········´\n";
@@ -117,6 +120,7 @@ vars_install       :
 
 #===[[ HEADER VARIABLES ]]=================================#
 HEADERS     := $(sort $(wildcard $(NAME_BASE)*.h))
+UTIL_HEADER := $(sort $(wildcard $(NAME_UTIL).h))
 UNIT_HEAD   := $(wildcard unit_head.unit)
 ifeq ($(UNIT_HEAD),unit_head.unit)
    UNIT_HEADH  := "unit_head.h"
@@ -131,6 +135,7 @@ vars_headers       :
 	$(SHOW_VAR)    "INC_MINE"    "${INC_MINE}"
 	$(SHOW_VAR)    "INC_DIR"     "${INC_DIR}"
 	$(SHOW_VAR)    "HEADERS"     "${HEADERS}"
+	$(SHOW_VAR)    "UTIL_HEADER" "${UTIL_HEADER}"
 	$(SHOW_VAR)    "UNIT_HEAD"   "${UNIT_HEAD}"
 	$(SHOW_VAR)    "UNIT_HEADH"  "${UNIT_HEADH}"
 	$(SHOW_VAR)    "UNIT_DEFS"   "${UNIT_DEFS}"
@@ -142,20 +147,41 @@ vars_headers       :
 ifeq ($(NAME_UTIL),)
    UTIL_SRC    := 
    UTIL_OBJD   := 
+   UTIL_OBJDNM := 
    UTIL_OBJ    := 
+   UTIL_OBJNM  := 
    UNIT_USRC   := 
+   UTIL_UUNIT  := 
+   UTIL_UCODE  := 
 else
-   UTIL_SRC    := $(sort $(wildcard $(NAME_UTIL)*.c))
+   temp        := $(patsubst %c,%c ,$(sort $(wildcard $(NAME_UTIL)*.c)))
+   UTIL_SRC    := $(sort $(filter-out %_unit.c,$(temp)))
    UTIL_OBJD   := $(patsubst %c,%o ,$(UTIL_SRC))
+   UTIL_OBJDNM := $(patsubst %o,%o ,$(filter-out %_main.o,$(UTIL_OBJD)))
    UTIL_OBJ    := $(patsubst %c,%os,$(UTIL_SRC))
-   UNIT_USRC   := $(sort $(wildcard $(NAME_UTIL).unit))
+   UTIL_OBJNM  := $(filter-out %_main.os,$(UTIL_OBJ))
+   UNIT_USRC   := $(sort $(wildcard $(NAME_UTIL)*.unit))
+   UTIL_UUNIT  := $(NAME_BASE)_zzzz.unit
+   UTIL_UCODE  := $(NAME_BASE)_zzzz_unit.c
 endif
 #---(done)-------------------#
 vars_util          :
-	$(PRINTF)   "utility·vars····´·········´·········´·········´·········´·········´\n";
+	$(PRINTF)   "UTILITY ----------------------------------------------------------´\n";
+	$(PRINTF)      "\n";
+	$(PRINTF)   "util·sources····´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "UTIL_SRC"    "${UTIL_SRC}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "util·temp·unit··´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UTIL_UUNIT"  "${UTIL_UUNIT}"
+	$(SHOW_VAR)    "UTIL_UCODE"  "${UTIL_UCODE}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "util·objects····´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "UTIL_OBJD"   "${UTIL_OBJD}"
 	$(SHOW_VAR)    "UTIL_OBJ"    "${UTIL_OBJ}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "util·no-mains···´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UTIL_OBJDNM" "${UTIL_OBJDNM}"
+	$(SHOW_VAR)    "UTIL_OBJNM"  "${UTIL_OBJNM}"
 	$(PRINTF)      "\n";
 
 
@@ -180,10 +206,12 @@ OBJ_NORM    := $(patsubst %c,%os,$(SRC_ALL))
 OBJ_NNOMAIN := $(filter-out %_main.os,$(OBJ_NORM))
 #---(simple spacing fix)-----------#
 SRC_ALL     := $(patsubst %os,%c ,$(OBJ_NORM))
-SRC_EDIT    := $(HEADERS) $(SRC_NORM) $(SRC_LINK) $(UTIL_SRC) $(UNIT_DEFS) $(SHAR_CODE)
+SRC_EDIT    := $(HEADERS) $(SRC_NORM) $(SRC_LINK) $(UTIL_HEADER) $(UTIL_SRC) $(UNIT_DEFS) $(SHAR_CODE)
 #---(done)-------------------#
 vars_prod          :
-	$(PRINTF)   "prod·vars·······´·········´·········´·········´·········´·········´\n";
+	$(PRINTF)   "PRODUCTION -------------------------------------------------------´\n";
+	$(PRINTF)      "\n";
+	$(PRINTF)   "prod·sources····´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "SRC_NORM"    "${SRC_NORM}"
 	$(SHOW_VAR)    "SRC_LINK"    "${SRC_LINK}"
 	$(SHOW_VAR)    "SRC_ALL"     "${SRC_ALL}"
@@ -214,6 +242,8 @@ SHAR_OBJD   := $(patsubst %.unit,%.o    ,$(SHAR_ALL))
 SHAR_OBJ    := $(patsubst %.unit,%.os   ,$(SHAR_ALL))
 #---(done)-------------------#
 vars_unit_share    :
+	$(PRINTF)   "UNIT·SHARES ------------------------------------------------------´\n";
+	$(PRINTF)      "\n";
 	$(PRINTF)   "unit·test·share·´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "SHAR_CODE"   "${SHAR_CODE}"
 	$(SHOW_VAR)    "SHAR_WIDE"   "${SHAR_WIDE}"
@@ -233,7 +263,6 @@ vars_unit_share    :
 UNIT_RSRC   := $(sort $(wildcard $(NAME_BASE).unit)) $(sort $(wildcard $(NAME_BASE)_[a-z][a-z]*.unit))
 UNIT_LSRC   := $(sort $(wildcard $(NAME_BASE)_[yY][A-Z]*.unit))
 UNIT_SSRC   := $(sort $(wildcard $(NAME_BASE)*.sunit))
-UNIT_EDIT   := $(UNIT_HEAD) $(UNIT_RSRC) $(UNIT_LSRC) $(UNIT_SSRC) $(UNIT_MSRC) $(UNIT_USRC) $(SHAR_WIDE) $(SHAR_DATA)
 #---(sources)----------------#
 temp        := $(UNIT_RSRC) $(UNIT_LSRC) $(UNIT_SSRC)
 UNIT_SRC    := $(patsubst %.unit,%.unit      ,$(temp))
@@ -248,13 +277,21 @@ temp        := $(sort $(wildcard $(NAME_BASE)*.munit))
 UNIT_MSRC   := $(patsubst %.munit,%.munit     ,$(wildcard master.munit) $(wildcard master.sh) $(temp))
 UNIT_MOBJ   := $(patsubst %.munit,%_munit.o   ,$(temp))
 UNIT_MEXE   := $(patsubst %.munit,%_munit     ,$(temp))
+#---(util files)-------------#
+UNIT_UOBJD  := $(patsubst %.unit,%_unit.o    ,$(UNIT_USRC))
+UNIT_UOBJ   := $(patsubst %.unit,%_unit.os   ,$(UNIT_USRC))
+UNIT_UEXED  := $(patsubst %.unit,%_unit_debug,$(UNIT_USRC))
+UNIT_UEXE   := $(patsubst %.unit,%_unit      ,$(UNIT_USRC))
+#---(editing)----------------#
+UNIT_EDIT   := $(patsubst %.unit      ,%.unit,$(UNIT_HEAD) $(UNIT_SRC) $(UNIT_MSRC) $(UNIT_USRC) $(SHAR_WIDE) $(SHAR_DATA))
 #---(done)-------------------#
 vars_unit          :
-	$(PRINTF)   "unit·edit·vars··´·········´·········´·········´·········´·········´\n";
+	$(PRINTF)   "UNIT·TESTING -----------------------------------------------------´\n";
+	$(PRINTF)      "\n";
+	$(PRINTF)   "unit·sources····´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "UNIT_RSRC"   "${UNIT_RSRC}"
 	$(SHOW_VAR)    "UNIT_LSRC"   "${UNIT_LSRC}"
 	$(SHOW_VAR)    "UNIT_SSRC"   "${UNIT_SSRC}"
-	$(SHOW_VAR)    "UNIT_USRC"   "${UNIT_USRC}"
 	$(PRINTF)      "\n";
 	$(PRINTF)   "unit·test·vars··´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "UNIT_SRC"    "${UNIT_SRC}"
@@ -268,7 +305,14 @@ vars_unit          :
 	$(SHOW_VAR)    "UNIT_MOBJ"   "${UNIT_MOBJ}"
 	$(SHOW_VAR)    "UNIT_MEXE"   "${UNIT_MEXE}"
 	$(PRINTF)      "\n";
-	$(PRINTF)   "vi·unit·vars····´·········´·········´·········´·········´·········´\n";
+	$(PRINTF)   "util·unit·test··´·········´·········´·········´·········´·········´\n";
+	$(SHOW_VAR)    "UNIT_USRC"   "${UNIT_USRC}"
+	$(SHOW_VAR)    "UNIT_UOBJD"  "${UNIT_UOBJD}"
+	$(SHOW_VAR)    "UNIT_UOBJ"   "${UNIT_UOBJ}"
+	$(SHOW_VAR)    "UNIT_UEXED"  "${UNIT_UEXED}"
+	$(SHOW_VAR)    "UNIT_UEXE"   "${UNIT_UEXE}"
+	$(PRINTF)      "\n";
+	$(PRINTF)   "vi·edit·vars····´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "UNIT_EDIT"   "${UNIT_EDIT}"
 	$(PRINTF)      "\n";
 
@@ -277,6 +321,8 @@ vars_unit          :
 #===[[ DOCUMENTATION VARIABLES ]]==========================#
 MANUALS     := $(sort $(wildcard $(NAME_BASE)*.[0123456789]))
 vars_manuals       :
+	$(PRINTF)   "OTHER ------------------------------------------------------------´\n";
+	$(PRINTF)      "\n";
 	$(PRINTF)   "manual·vars·····´·········´·········´·········´·········´·········´\n";
 	$(SHOW_VAR)    "MANUALS"     "${MANUALS}"
 	$(PRINTF)      "\n";
